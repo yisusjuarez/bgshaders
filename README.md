@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# jedylabs — loop studio
 
-## Getting Started
+Generate seamless looping background videos in the browser: animated WebGL
+shaders with modern designs, randomized or AI-generated, exported as MP4.
 
-First, run the development server:
+## Why the loops are perfect
+
+Every shader is driven by a normalized phase `t ∈ [0,1)`, and time only enters
+the GLSL as `sin`/`cos` of **integer harmonics** of `2π·t`. Every animated term
+therefore completes a whole number of cycles per loop, so frame 0 and frame N
+are mathematically identical — the seam does not exist. `/gl-test` verifies
+this on your GPU: it renders phase 0 and phase 1 and asserts the pixels match
+byte-for-byte, and runs a small real export through the encoder.
+
+Export renders offline, frame by frame (exactly `fps × duration` frames), and
+encodes with WebCodecs → H.264 MP4 (`mp4-muxer`). Browsers without WebCodecs
+fall back to a realtime WebM capture via MediaRecorder.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Space** play/pause · **R** random design · **G** AI generate · **P** parameters
+- `?seed=N` in the URL reproduces a specific random design.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## AI generator (OpenRouter)
 
-## Learn More
+The Generate dialog asks a model for a shader config (family, palette, motion)
+matching your prompt — output is validated server-side, so results always
+compile and always loop. Provide a key either way:
 
-To learn more about Next.js, take a look at the following resources:
+- Paste it in **Settings** in the app (stored in your browser's localStorage), or
+- Set `OPENROUTER_API_KEY` in `.env.local` (see `.env.example`) for a
+  server-side key shared by all users of your deployment.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Next.js (App Router) · Tailwind 4 + shadcn/ui · WebGL2 · WebCodecs + mp4-muxer
+· zod · OpenRouter.
 
-## Deploy on Vercel
+## Tests
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm test        # vitest: config schema, RNG determinism, loop-safety of GLSL
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Visit `/gl-test` in a browser for the GPU-level loop-exactness and export
+diagnostics.

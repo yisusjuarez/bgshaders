@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { FAMILIES, shaderConfigSchema, type ShaderConfig } from "@/lib/shader/schema";
+
+const requestSchema = z.object({
+  prompt: z.string().min(1).max(500),
+  apiKey: z.string().optional(),
+  model: z.string().optional(),
+});
+
+const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
+
+const SYSTEM_PROMPT = `You design looping animated background videos by emitting a JSON config for a WebGL shader engine. Respond with ONLY a JSON object, no markdown fences, no prose.
+
+Schema:
+{
+  "name": string,            // short evocative title for the design, max 4 words
+  "family": one of ${JSON.stringify(FAMILIES)},
+  "colors": string[2..6],    // #rrggbb hex, ordered dark → light; first color anchors the background
+  "speed": 1 | 2 | 3,        // integer cycles per loop; 1 = calm, 3 = energetic
+  "scale": 0.4..3,           // pattern zoom; lower = bigger shapes
+  "complexity": 0..1,        // layer density
+  "warp": 0..1,              // organic distortion amount
+  "grain": 0..0.2,           // film grain
+  "vignette": 0..1,          // edge darkening
+  "duration": 2..30          // loop length in seconds
+}
+
+Family guide:
+- mesh: soft drifting mesh-gradient color fields (modern, calm, great for hero sections)
+- silk: flowing fabric-like wave bands
+- aurora: vertical light curtains on a dark sky
+- smoke: rolling clouds of blended color
+- orbs: drifting bokeh circles
+- grid: pulsing dot lattice, tech feel
+- rings: concentric ripples spreading from drifting centers, water feel
+- rays: soft light beams sweeping around the center, spotlight feel
+- cells: organic voronoi mosaic with dark seams, stained-glass feel
+- ribbons: bold near-hard bands of color flowing diagonally
+- halftone: print-style dots whose size follows a slow wave, editorial feel
+- nebula: twinkling starfield over slow nebula clouds, space feel
+- topo: thin topographic contour lines over morphing terrain, cartographic feel
+- lava: metaball blobs merging and splitting, lava-lamp feel
+- kaleido: mirrored kaleidoscope sectors rotating, ornamental feel
+- hex: hexagonal tiles lit by a travelling pulse, honeycomb tech feel
+- weave: crossing wave gratings forming moiré interference, textile feel
+- spiral: swirling log-spiral arms, hypnotic feel
+- prism: sliding glass gradient strips with edge sheen, glassmorphism feel
+- breath: one soft glow slowly inhaling/exhaling, meditative minimal feel
+- rain: streaks falling at different depths, rainy-window feel
+- chevron: zigzag color bands marching steadily, sporty graphic feel
+- sweep: a clean linear gradient whose direction slowly rotates, ultra-minimal
+- ridge: layered mountain ridgelines drifting in parallax, landscape feel
+
+Pick colors that match the mood of the user's request. Prefer speed 1 and duration 8-12 for ambient backgrounds unless the request implies energy.`;
+
+/** Clamp/repair a model response into a valid config rather than failing on
+ *  near-misses (e.g. speed 1.5 or scale slightly out of range). */
+function repair(raw: Record<string, unknown>): ShaderConfig | null {
+  const num = (v: unknown, lo: number, hi: number, fallback: number) => {
+    const n = typeof v === "number" ? v : parseFloat(String(v));
+    return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : fallback;
+  };
+  const colors = Array.isArray(raw.colors)
+    ? raw.colors.filter((c): c is string => typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c)).slice(0, 6)
+    : [];
+  const candidate = {
+    name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 60) : "Untitled Loop",
+    family: FAMILIES.includes(raw.family as never) ? raw.family : "mesh",
+    seed: Math.floor(Math.random() * 1_000_000),
+    colors,
+    speed: Math.round(num(raw.speed, 1, 3, 1)),
+    scale: num(raw.scale, 0.4, 3, 1),
+    complexity: num(raw.complexity, 0, 1, 0.6),
+    warp: num(raw.warp, 0, 1, 0.4),
+    grain: num(raw.grain, 0, 0.2, 0.05),
+    vignette: num(raw.vignette, 0, 1, 0.4),
+    duration: num(raw.duration, 2, 30, 10),
+  };
+  const parsed = shaderConfigSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
+export async function POST(req: NextRequest) {
+  const body = requestSchema.safeParse(await req.json().catch(() => null));
+  if (!body.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const { prompt, apiKey, model } = body.data;
+  const key = apiKey || process.env.OPENROUTER_API_KEY;
+  if (!key) {
+    return NextResponse.json(
+      { error: "No OpenRouter API key. Add one in Settings or set OPENROUTER_API_KEY." },
+      { status: 401 },
+    );
+  }
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://localhost",
+      "X-Title": "jedylabs loop studio",
+    },
+    body: JSON.stringify({
+      model: model || DEFAULT_MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.9,
+      max_tokens: 600,
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    const message =
+      res.status === 401
+        ? "OpenRouter rejected the API key."
+        : `OpenRouter request failed (${res.status}).`;
+    console.error("openrouter error", res.status, detail.slice(0, 500));
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
+
+  const data = await res.json();
+  const text: string | undefined = data?.choices?.[0]?.message?.content;
+  if (!text) {
+    return NextResponse.json({ error: "Empty response from the model." }, { status: 502 });
+  }
+
+  let raw: Record<string, unknown>;
+  try {
+    // Tolerate fenced output despite instructions.
+    raw = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ""));
+  } catch {
+    return NextResponse.json({ error: "The model returned invalid JSON. Try again." }, { status: 502 });
+  }
+
+  const config = repair(raw);
+  if (!config || config.colors.length < 2) {
+    return NextResponse.json({ error: "The model returned an unusable config. Try again." }, { status: 502 });
+  }
+  return NextResponse.json({ config });
+}
