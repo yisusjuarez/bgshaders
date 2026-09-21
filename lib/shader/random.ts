@@ -58,7 +58,18 @@ const TUNING: Record<
   rain: { scale: [0.7, 1.6], warp: [0.2, 0.8], complexity: [0.3, 0.9] },
   chevron: { scale: [0.6, 1.8], warp: [0.1, 0.7], complexity: [0.2, 0.8] },
   sweep: { scale: [0.7, 1.4], warp: [0.1, 0.8], complexity: [0.2, 0.9] },
-  ridge: { scale: [0.8, 1.4], warp: [0.2, 0.9], complexity: [0.4, 1.0] },
+  marble: { scale: [0.6, 1.5], warp: [0.45, 1.0], complexity: [0.4, 1.0] },
+  caustics: { scale: [0.7, 1.7], warp: [0.2, 0.8], complexity: [0.35, 0.9] },
+  ink: { scale: [0.65, 1.5], warp: [0.4, 1.0], complexity: [0.3, 0.9] },
+  bubbles: { scale: [0.7, 1.8], warp: [0.1, 0.7], complexity: [0.25, 0.9] },
+  checker: { scale: [0.65, 1.8], warp: [0.1, 0.75], complexity: [0.2, 0.85] },
+  tunnel: { scale: [0.65, 1.5], warp: [0.15, 0.75], complexity: [0.25, 0.9] },
+  maze: { scale: [0.7, 1.8], warp: [0.0, 0.55], complexity: [0.25, 0.9] },
+  orbitals: { scale: [0.65, 1.45], warp: [0.1, 0.7], complexity: [0.3, 1.0] },
+  plasma: { scale: [0.6, 1.7], warp: [0.25, 0.9], complexity: [0.3, 1.0] },
+  glitch: { scale: [0.7, 1.8], warp: [0.15, 0.85], complexity: [0.25, 0.9] },
+  equalizer: { scale: [0.7, 1.8], warp: [0.0, 0.6], complexity: [0.25, 0.9] },
+  radar: { scale: [0.65, 1.4], warp: [0.05, 0.6], complexity: [0.25, 0.9] },
 };
 
 export function randomConfig(seed?: number): ShaderConfig {

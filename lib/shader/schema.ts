@@ -24,7 +24,18 @@ export const FAMILIES = [
   "rain",
   "chevron",
   "sweep",
-  "ridge",
+  "marble",
+  "caustics",
+  "ink",
+  "bubbles",
+  "checker",
+  "tunnel",
+  "maze",
+  "orbitals",
+  "plasma",
+  "glitch",
+  "equalizer",
+  "radar",
 ] as const;
 
 export type Family = (typeof FAMILIES)[number];

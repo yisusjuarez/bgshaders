@@ -66,4 +66,21 @@ describe("parseLibrary", () => {
     expect(parseLibrary(JSON.stringify([{ bogus: true }]))).toEqual([]);
     expect(parseLibrary(JSON.stringify({ not: "an array" }))).toEqual([]);
   });
+
+  it("drops removed ridge entries without losing valid saved loops", () => {
+    const first = randomConfig(1);
+    const legacyRidge = { ...randomConfig(2), family: "ridge" };
+    const last = randomConfig(3);
+    expect(parseLibrary(JSON.stringify([first, legacyRidge, last]))).toEqual([
+      first,
+      last,
+    ]);
+  });
+
+  it("drops individual corrupt entries instead of clearing the tray", () => {
+    const valid = randomConfig(4);
+    expect(parseLibrary(JSON.stringify([{ bogus: true }, valid]))).toEqual([
+      valid,
+    ]);
+  });
 });

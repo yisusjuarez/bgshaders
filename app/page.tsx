@@ -93,7 +93,6 @@ export default function Home() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- must run post-hydration; deriving config from the URL during the initial render would desync server and client markup
       setConfig(family ? { ...cfg, family } : cfg);
     } else if (family) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- same post-hydration constraint as above
       setConfig((c) => ({ ...c, family }));
     }
   }, []);

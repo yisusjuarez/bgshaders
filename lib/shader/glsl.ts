@@ -550,24 +550,265 @@ vec3 scene(vec2 p, float T) {
   return pal(v);
 }
 `,
-  // Layered mountain ridgelines drifting in parallax.
-  ridge: `
+  // Flowing marble veins built from repeated, loop-safe domain warps.
+  marble: `
 vec3 scene(vec2 p, float T) {
-  vec3 col = pal(0.95);
-  float n = 3.0 + floor(u_complexity * 3.0);
+  vec2 q = p * 2.1;
+  float layers = mix(3.0, 6.0, u_complexity);
+  float vein = 0.0, amp = 1.0, total = 0.0;
   for (int i = 0; i < 6; i++) {
     float fi = float(i);
+    if (fi >= layers) break;
+    float k = 1.0 + floor(hash(fi + 101.0) * 2.0);
+    float phase = TAU * hash(fi + 103.0);
+    vec2 bend = vec2(sin(q.y * (1.1 + fi * 0.3) + k * T + phase),
+                     cos(q.x * (0.9 + fi * 0.25) - k * T + phase));
+    q += bend * (0.18 + 0.38 * u_warp) * amp;
+    vein += amp * sin(q.x * 1.5 + q.y * 0.55 + k * T + phase);
+    total += amp;
+    q = mat2(0.92, -0.38, 0.38, 0.92) * q * 1.18;
+    amp *= 0.7;
+  }
+  float v = 0.5 + 0.5 * sin((vein / total) * 4.2 + q.x * 0.18);
+  float fine = pow(1.0 - abs(2.0 * v - 1.0), 4.0);
+  return mix(pal(v), pal(fract(v + 0.35)), fine * (0.25 + 0.35 * u_warp));
+}
+`,
+  // Intersecting wave fronts form a refracted underwater light network.
+  caustics: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p * 3.0;
+  float layers = mix(3.0, 6.0, u_complexity);
+  float light = 0.0, total = 0.0;
+  for (int i = 0; i < 6; i++) {
+    float fi = float(i);
+    if (fi >= layers) break;
+    float a = TAU * hash(fi + 121.0);
+    vec2 dir = vec2(cos(a), sin(a));
+    float k = 1.0 + floor(hash(fi + 123.0) * 3.0);
+    float wave = sin(dot(q, dir) * (1.0 + fi * 0.22) + k * T + TAU * hash(fi + 127.0));
+    q += vec2(-dir.y, dir.x) * wave * u_warp * 0.12;
+    light += pow(1.0 - abs(wave), 7.0) / (1.0 + fi * 0.28);
+    total += 1.0 / (1.0 + fi * 0.28);
+  }
+  light = clamp(light / total * 3.4, 0.0, 1.0);
+  float water = 0.45 + 0.25 * sin(q.x * 0.45 + q.y * 0.3 + T);
+  vec3 base = pal(clamp(water, 0.0, 1.0)) * 0.55;
+  return base + pal(0.92) * light * (0.65 + 0.35 * sin(T) * sin(T));
+}
+`,
+  // Soft pigment blooms orbit, merge and reveal fine ink contours.
+  ink: `
+vec3 scene(vec2 p, float T) {
+  float n = mix(4.0, 9.0, u_complexity);
+  float field = 0.0;
+  vec3 pigment = vec3(0.0);
+  float weight = 0.0;
+  for (int i = 0; i < 9; i++) {
+    float fi = float(i);
     if (fi >= n) break;
-    float k = 1.0 + floor(hash(fi + 51.0) * 2.0);
-    float drift = (0.25 + 0.4 * u_warp) * sin(k * T + TAU * hash(fi + 53.0));
-    float x = p.x * (1.0 + fi * 0.35) + drift + hash(fi + 55.0) * 7.0;
-    float y = 0.45 - (fi + 1.0) * (1.1 / n);
-    float ridgeY = y
-      + 0.16 * sin(x * 1.7)
-      + 0.09 * sin(x * 3.3 + 1.7)
-      + 0.05 * sin(x * 6.1 + 4.0);
-    float m = smoothstep(0.006, -0.006, p.y - ridgeY);
-    col = mix(col, pal(max(0.85 - (fi + 1.0) / n, 0.0)) * (1.0 - fi * 0.05), m);
+    float k1 = 1.0 + floor(hash(fi + 141.0) * 2.0);
+    float k2 = 1.0 + floor(hash(fi + 143.0) * 3.0);
+    float ph = TAU * hash(fi + 147.0);
+    vec2 c = (vec2(hash(fi + 149.0), hash(fi + 151.0)) - 0.5) * 1.35;
+    c += (0.12 + 0.32 * u_warp) * vec2(sin(k1 * T + ph), cos(k2 * T + ph));
+    vec2 d = p - c;
+    d.x += 0.18 * u_warp * sin(d.y * 5.0 + T + ph);
+    float radius = 0.16 + 0.28 * hash(fi + 157.0);
+    float w = exp(-dot(d, d) / (radius * radius));
+    field += w;
+    pigment += pal(hash(fi + 163.0)) * w;
+    weight += w;
+  }
+  vec3 paper = pal(0.04) * 0.42;
+  vec3 inkCol = pigment / max(weight, 0.001);
+  float fill = smoothstep(0.08, 0.75, field);
+  float contour = pow(0.5 + 0.5 * sin(field * 18.0 - T), 10.0) * fill;
+  return mix(paper, inkCol, fill * 0.88) + pal(0.9) * contour * 0.22;
+}
+`,
+  // Transparent bubbles drift on closed paths with iridescent rims.
+  bubbles: `
+vec3 scene(vec2 p, float T) {
+  vec3 col = mix(pal(0.08), pal(0.35), 0.5 + 0.35 * p.y) * 0.45;
+  float n = mix(5.0, 13.0, u_complexity);
+  for (int i = 0; i < 13; i++) {
+    float fi = float(i);
+    if (fi >= n) break;
+    float k1 = 1.0 + floor(hash(fi + 181.0) * 3.0);
+    float k2 = 1.0 + floor(hash(fi + 183.0) * 2.0);
+    float ph = TAU * hash(fi + 187.0);
+    vec2 base = (vec2(hash(fi + 191.0), hash(fi + 193.0)) - 0.5) * 1.75;
+    vec2 c = base + (0.1 + 0.25 * u_warp) * vec2(sin(k1 * T + ph), cos(k2 * T + ph));
+    float r = 0.07 + 0.18 * hash(fi + 197.0);
+    float d = length(p - c);
+    float rim = exp(-pow((d - r) / (0.012 + r * 0.08), 2.0));
+    float glass = (1.0 - smoothstep(0.0, r, d)) * 0.12;
+    float sheen = 0.5 + 0.5 * sin(atan(p.y - c.y, p.x - c.x) * 2.0 + T + ph);
+    col = mix(col, pal(fract(hash(fi + 199.0) + sheen * 0.35)), glass);
+    col += pal(fract(hash(fi + 199.0) + sheen * 0.45)) * rim * 0.38;
+  }
+  return col;
+}
+`,
+  // A checkerboard flexes like a sheet while color pulses cross its cells.
+  checker: `
+vec3 scene(vec2 p, float T) {
+  float a = (hash(211.0) - 0.5) * 0.7;
+  p = mat2(cos(a), -sin(a), sin(a), cos(a)) * p;
+  p += u_warp * 0.2 * vec2(sin(p.y * 3.0 + T), cos(p.x * 3.0 - T));
+  float cells = mix(4.0, 11.0, u_complexity);
+  vec2 g = p * cells;
+  vec2 id = floor(g);
+  vec2 f = fract(g);
+  float parity = mod(id.x + id.y, 2.0);
+  float pulse = 0.5 + 0.5 * sin(T + (id.x + id.y) * 0.35);
+  vec3 aCol = pal(0.08 + pulse * 0.25);
+  vec3 bCol = pal(0.65 + pulse * 0.3);
+  float edge = min(min(f.x, f.y), min(1.0 - f.x, 1.0 - f.y));
+  vec3 col = mix(aCol, bCol, parity);
+  col += pal(0.95) * exp(-edge * edge * 900.0) * 0.12;
+  return col;
+}
+`,
+  // Angular and radial waves create a repeating flight through a neon tunnel.
+  tunnel: `
+vec3 scene(vec2 p, float T) {
+  p += u_warp * 0.12 * vec2(sin(T), cos(T));
+  float r = max(length(p), 0.015);
+  float a = atan(p.y, p.x);
+  float sides = 5.0 + floor(u_complexity * 7.0);
+  float depthPhase = log(r) * (2.2 + u_complexity) - T / TAU;
+  float rings = 0.5 + 0.5 * cos(TAU * depthPhase);
+  float spokes = 0.5 + 0.5 * cos(a * sides + u_warp * sin(T));
+  float grid = pow(rings, 5.0) + pow(spokes, 10.0) * 0.55;
+  float flow = 0.5 + 0.5 * sin(TAU * depthPhase + a * 2.0);
+  vec3 col = pal(flow) * (0.28 + 0.72 * clamp(grid, 0.0, 1.0));
+  col += pal(0.95) * pow(max(0.0, 1.0 - r), 5.0) * 0.2;
+  return col;
+}
+`,
+  // Diagonal traces in seeded tiles assemble into a pulsing circuit maze.
+  maze: `
+vec3 scene(vec2 p, float T) {
+  p += u_warp * 0.08 * vec2(sin(p.y * 2.0 + T), cos(p.x * 2.0 + T));
+  float cells = mix(5.0, 13.0, u_complexity);
+  vec2 g = p * cells;
+  vec2 id = floor(g);
+  vec2 f = fract(g) - 0.5;
+  float h = hash(id.x * 71.0 + id.y * 131.0);
+  float s = h > 0.5 ? 1.0 : -1.0;
+  float trace = 1.0 - smoothstep(0.045, 0.12, abs(f.x + s * f.y));
+  float node = 1.0 - smoothstep(0.06, 0.13, length(abs(f) - vec2(0.42)));
+  float pulse = 0.5 + 0.5 * sin(T * (1.0 + floor(h * 2.0)) - (id.x + id.y) * 0.32);
+  vec3 base = pal(0.05 + 0.18 * h) * 0.38;
+  vec3 wire = pal(0.45 + 0.5 * pulse);
+  return base + wire * max(trace, node * 0.6) * (0.35 + 0.65 * pulse);
+}
+`,
+  // Elliptical tracks and their luminous bodies move in closed orbits.
+  orbitals: `
+vec3 scene(vec2 p, float T) {
+  vec3 col = pal(0.03) * 0.3;
+  float n = mix(3.0, 7.0, u_complexity);
+  for (int i = 0; i < 7; i++) {
+    float fi = float(i);
+    if (fi >= n) break;
+    float ph = TAU * hash(fi + 227.0);
+    float angle = TAU * hash(fi + 229.0);
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    vec2 q = rot * p;
+    float radius = 0.2 + fi * 0.105;
+    float squash = 0.52 + 0.38 * hash(fi + 233.0);
+    float orbitD = abs(length(vec2(q.x, q.y / squash)) - radius);
+    float line = exp(-orbitD * orbitD * 4200.0);
+    float k = 1.0 + floor(hash(fi + 239.0) * 3.0);
+    vec2 body = rot * vec2(radius * cos(k * T + ph), radius * squash * sin(k * T + ph));
+    body += u_warp * 0.035 * vec2(sin(T + ph), cos(T + ph));
+    float glow = exp(-dot(p - body, p - body) * (240.0 - fi * 12.0));
+    vec3 c = pal(hash(fi + 241.0));
+    col += c * (line * 0.16 + glow * 0.8);
+  }
+  return col / (0.8 + 0.22 * col);
+}
+`,
+  // Classic layered sine plasma with a modern palette treatment.
+  plasma: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p * (2.2 + u_complexity * 1.8);
+  float v = sin(q.x + T);
+  v += sin(q.y * 1.25 - 2.0 * T + TAU * hash(251.0));
+  v += sin((q.x + q.y) * 0.72 + T + TAU * hash(257.0));
+  vec2 c = q + u_warp * 1.2 * vec2(sin(T), cos(T));
+  v += sin(length(c) * (2.0 + u_complexity * 2.0) - 2.0 * T);
+  v += u_warp * sin(q.x * 1.7 + sin(q.y + T) * 2.0 - T);
+  v = 0.5 + 0.5 * sin(v * 1.15);
+  return pal(v);
+}
+`,
+  // Horizontal digital slices displace color channels on rhythmic pulses.
+  glitch: `
+float glitchField(vec2 p, float T) {
+  return 0.5 + 0.25 * sin(p.x * 3.2 + T) + 0.25 * sin(p.y * 4.7 - 2.0 * T);
+}
+vec3 scene(vec2 p, float T) {
+  float rows = mix(7.0, 24.0, u_complexity);
+  float row = floor((p.y + 1.5) * rows);
+  float h = hash(row + 271.0);
+  float gate = pow(0.5 + 0.5 * sin(T * (1.0 + floor(h * 3.0)) + h * TAU), 7.0);
+  float shift = (h - 0.5) * u_warp * 0.42 * gate;
+  vec2 q = p + vec2(shift, 0.0);
+  float split = (0.006 + 0.025 * u_warp) * (0.3 + gate);
+  vec3 left = pal(glitchField(q - vec2(split, 0.0), T));
+  vec3 mid = pal(glitchField(q, T));
+  vec3 right = pal(glitchField(q + vec2(split, 0.0), T));
+  vec3 col = vec3(left.r, mid.g, right.b);
+  float cut = 1.0 - smoothstep(0.0, 0.035, abs(fract((p.y + 1.5) * rows) - 0.5));
+  return mix(col, pal(fract(h + T / TAU)), cut * gate * 0.28);
+}
+`,
+  // Spectrum columns pulse in harmonized waves across the frame.
+  equalizer: `
+vec3 scene(vec2 p, float T) {
+  float bars = mix(9.0, 28.0, u_complexity);
+  float gx = (p.x + 1.25) * bars * 0.45;
+  float id = floor(gx);
+  float x = abs(fract(gx) - 0.5);
+  float h = hash(id + 293.0);
+  float k = 1.0 + floor(h * 3.0);
+  float level = 0.2 + 0.65 * (0.5 + 0.5 * sin(k * T + id * 0.47 + h * TAU));
+  level *= 0.78 + 0.22 * sin(p.x * 2.0 + T) * sin(p.x * 2.0 + T);
+  float bar = (1.0 - smoothstep(0.32, 0.46, x))
+            * (1.0 - smoothstep(level, level + 0.035, p.y + 0.75));
+  float segments = 0.65 + 0.35 * smoothstep(0.08, 0.16, fract((p.y + 1.0) * 18.0));
+  vec3 bg = pal(0.03) * 0.32;
+  vec3 c = pal(clamp((p.y + 0.75) / 1.5 + 0.18 * sin(T + h * TAU), 0.0, 1.0));
+  return bg + c * bar * segments * (0.65 + 0.35 * u_warp);
+}
+`,
+  // Range rings, blinking targets and a soft rotating radar beam.
+  radar: `
+vec3 scene(vec2 p, float T) {
+  p += u_warp * 0.035 * vec2(sin(T), cos(T));
+  float r = length(p);
+  float a = atan(p.y, p.x);
+  float ringCount = mix(4.0, 8.0, u_complexity);
+  float rings = pow(0.5 + 0.5 * cos(r * ringCount * TAU), 22.0);
+  float axes = exp(-p.x * p.x * 1800.0) + exp(-p.y * p.y * 1800.0);
+  float beamAngle = T + TAU * hash(307.0);
+  float beam = pow(max(0.0, 0.5 + 0.5 * cos(a - beamAngle)), 28.0) * smoothstep(0.04, 0.9, r);
+  vec3 col = pal(0.04) * 0.28 + pal(0.5) * (rings * 0.18 + axes * 0.1);
+  col += pal(0.82) * beam * 0.55;
+  float n = mix(3.0, 8.0, u_complexity);
+  for (int i = 0; i < 8; i++) {
+    float fi = float(i);
+    if (fi >= n) break;
+    float ph = TAU * hash(fi + 311.0);
+    float rr = 0.16 + 0.68 * hash(fi + 313.0);
+    vec2 target = rr * vec2(cos(ph), sin(ph));
+    float ping = 0.5 + 0.5 * sin(T * (1.0 + floor(hash(fi + 317.0) * 3.0)) + ph);
+    float dotGlow = exp(-dot(p - target, p - target) * 850.0) * pow(ping, 5.0);
+    col += pal(hash(fi + 319.0)) * dotGlow * 0.85;
   }
   return col;
 }

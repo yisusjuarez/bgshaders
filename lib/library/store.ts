@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const LIBRARY_STORAGE = "jedylabs-library";
 
-const librarySchema = z.array(shaderConfigSchema).catch([]);
+const librarySchema = z.array(z.unknown()).catch([]);
 
 /**
  * Stable identity for a loop's *look* — everything that affects pixels, minus
@@ -48,11 +48,19 @@ export function removeAt(list: ShaderConfig[], i: number): ShaderConfig[] {
   return list.filter((_, idx) => idx !== i);
 }
 
-/** Parse persisted JSON, tolerating anything malformed by falling back to []. */
+/**
+ * Parse persisted JSON item by item. A removed family or corrupt entry should
+ * not make the rest of a curated tray disappear.
+ */
 export function parseLibrary(raw: string | null): ShaderConfig[] {
   if (!raw) return [];
   try {
-    return librarySchema.parse(JSON.parse(raw));
+    return librarySchema
+      .parse(JSON.parse(raw))
+      .flatMap((item) => {
+        const parsed = shaderConfigSchema.safeParse(item);
+        return parsed.success ? [parsed.data] : [];
+      });
   } catch {
     return [];
   }

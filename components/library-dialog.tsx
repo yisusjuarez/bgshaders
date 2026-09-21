@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Package, Plus, Trash2 } from "lucide-react";
+import { Package, Plus, Shuffle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,11 @@ import { exportLibrary, type GroupBy } from "@/lib/export/library";
 import { FPS_OPTIONS, RESOLUTIONS } from "@/lib/export/presets";
 import { matchPaletteName } from "@/lib/library/color";
 import { buildMatrix, matrixCount, type MatrixAxes } from "@/lib/library/matrix";
+import {
+  buildRandomBatch,
+  DEFAULT_RANDOM_SEED,
+  randomBaseSeed,
+} from "@/lib/library/random-batch";
 import { FAMILY_LABELS } from "@/lib/shader/labels";
 import { PALETTES } from "@/lib/shader/palettes";
 import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
@@ -35,11 +40,18 @@ import { cn } from "@/lib/utils";
 const SPEEDS = [1, 2, 3];
 const SEEDS_PER_COMBO = ["1", "2", "3", "4"];
 const DURATIONS = ["6", "8", "10", "12"];
+const RANDOM_COUNTS = ["5", "10", "25", "50", "100"];
+const RANDOM_DURATIONS = [
+  { value: "mixed", label: "Mixed" },
+  ...DURATIONS.map((v) => ({ value: v, label: `${v}s` })),
+];
 const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
   { value: "family", label: "By style (family)" },
   { value: "palette", label: "By palette" },
   { value: "colorFamily", label: "By color" },
   { value: "speed", label: "By speed" },
+  { value: "grain", label: "By grain" },
+  { value: "duration", label: "By duration" },
   { value: "none", label: "Flat (no folders)" },
 ];
 const SOFT_CAP = 60;
@@ -116,6 +128,10 @@ export function LibraryDialog({
   const [palettes, setPalettes] = useState<string[]>([]);
   const [seedsPerCombo, setSeedsPerCombo] = useState("1");
   const [matrixDuration, setMatrixDuration] = useState("8");
+  // Random draw
+  const [randomCount, setRandomCount] = useState("25");
+  const [randomDuration, setRandomDuration] = useState("8");
+  const [randomSeed, setRandomSeed] = useState(DEFAULT_RANDOM_SEED);
   // Export settings (720p default keeps library memory sane)
   const [resolution, setResolution] = useState("1280x720");
   const [fps, setFps] = useState("30");
@@ -136,6 +152,25 @@ export function LibraryDialog({
   };
   const count = matrixCount(axes);
   const canAdd = families.length > 0 && speeds.length > 0 && palettes.length > 0;
+
+  const randomTotal = Number(randomCount);
+
+  const addRandom = () => {
+    const configs = buildRandomBatch({
+      count: randomTotal,
+      baseSeed: randomSeed,
+      duration: randomDuration === "mixed" ? undefined : Number(randomDuration),
+    });
+    const added = onAdd(configs);
+    const skipped = configs.length - added;
+    toast.success(
+      `Added ${added} random loop${added === 1 ? "" : "s"} to the tray` +
+        (skipped > 0 ? ` · ${skipped} duplicate${skipped === 1 ? "" : "s"} skipped` : ""),
+    );
+    // Fresh seed so a second draw is a different set, not a deduped no-op.
+    setRandomSeed(randomBaseSeed());
+    setTab("tray");
+  };
 
   const addMatrix = () => {
     const configs = buildMatrix(axes);
@@ -217,6 +252,7 @@ export function LibraryDialog({
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full">
             <TabsTrigger value="matrix">Matrix</TabsTrigger>
+            <TabsTrigger value="random">Random</TabsTrigger>
             <TabsTrigger value="tray">Tray ({library.length})</TabsTrigger>
           </TabsList>
 
@@ -312,12 +348,66 @@ export function LibraryDialog({
             </div>
           </TabsContent>
 
+          {/* RANDOM */}
+          <TabsContent value="random" className="max-h-[52vh] space-y-4 overflow-y-auto pr-1 pt-2">
+            <p className="text-[13px] text-muted-foreground">
+              Draw loops from the whole design space — every style, palette and texture,
+              not a fixed grid. The base seed makes a draw reproducible; reroll it for a
+              different set.
+            </p>
+
+            <div className="flex gap-4">
+              <div className="flex-1 space-y-2">
+                <Label>How many</Label>
+                <Select items={RANDOM_COUNTS.map((v) => ({ value: v, label: v }))} value={randomCount} onValueChange={(v) => v && setRandomCount(v)}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {RANDOM_COUNTS.map((v) => (<SelectItem key={v} value={v}>{v}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 space-y-2">
+                <Label>Duration</Label>
+                <Select items={RANDOM_DURATIONS} value={randomDuration} onValueChange={(v) => v && setRandomDuration(v)}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {RANDOM_DURATIONS.map((d) => (<SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Base seed</Label>
+              <div className="flex items-center gap-2">
+                <span className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[12px] tabular-nums text-white/70">
+                  {randomSeed}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => setRandomSeed(randomBaseSeed())}>
+                  <Shuffle className="size-4" />
+                  Reroll
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <span className="font-mono text-[11px] text-muted-foreground">
+                {randomTotal} loop{randomTotal === 1 ? "" : "s"}
+                {randomTotal > SOFT_CAP && " · large batch — this can take a while"}
+              </span>
+              <Button size="sm" onClick={addRandom}>
+                <Plus className="size-4" />
+                Add to tray
+              </Button>
+            </div>
+          </TabsContent>
+
           {/* TRAY */}
           <TabsContent value="tray" className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 pt-2">
             {library.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                The tray is empty. Generate loops in the Matrix tab, or add the current
-                loop from the dock.
+                The tray is empty. Generate loops in the Matrix or Random tab, or add
+                the current loop from the dock.
               </p>
             ) : (
               <>

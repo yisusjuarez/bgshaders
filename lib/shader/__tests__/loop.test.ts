@@ -4,6 +4,27 @@ import { mulberry32, randomConfig } from "../random";
 import { FAMILIES, hexToRgb, shaderConfigSchema } from "../schema";
 
 describe("shaderConfigSchema", () => {
+  it("exposes the expanded catalog without the retired ridge family", () => {
+    expect(FAMILIES).toHaveLength(35);
+    expect(FAMILIES).not.toContain("ridge");
+    expect(FAMILIES).toEqual(
+      expect.arrayContaining([
+        "marble",
+        "caustics",
+        "ink",
+        "bubbles",
+        "checker",
+        "tunnel",
+        "maze",
+        "orbitals",
+        "plasma",
+        "glitch",
+        "equalizer",
+        "radar",
+      ]),
+    );
+  });
+
   it("accepts a valid config", () => {
     const result = shaderConfigSchema.safeParse(randomConfig(1));
     expect(result.success).toBe(true);

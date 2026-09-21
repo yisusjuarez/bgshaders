@@ -59,9 +59,19 @@ export default function GlTest() {
               // seam step: last exported frame → first frame
               renderer.render(cfg, (frames - 1) / frames, SIZE, SIZE);
               const last = readPixels(gl);
-              // reference: adjacent-frame steps sampled around the loop (motion
-              // speed varies over the cycle, so take the max)
+              // Reference nearby steps on both sides of the seam as well as
+              // across the cycle. Hard-edged styles can have a locally large
+              // but still continuous step, so sparse mid-loop samples alone
+              // would produce false suspects.
+              renderer.render(cfg, (frames - 2) / frames, SIZE, SIZE);
+              const beforeLast = readPixels(gl);
+              renderer.render(cfg, 1 / frames, SIZE, SIZE);
+              const afterFirst = readPixels(gl);
               let adjacent = 0;
+              adjacent = Math.max(
+                meanDiff(beforeLast, last),
+                meanDiff(first, afterFirst),
+              );
               for (const phase of [0.15, 0.35, 0.55, 0.75]) {
                 renderer.render(cfg, phase, SIZE, SIZE);
                 const a = readPixels(gl);

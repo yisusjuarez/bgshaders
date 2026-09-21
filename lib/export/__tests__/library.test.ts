@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { strToU8, unzipSync } from "fflate";
 import {
   buildManifest,
   clipBasename,
+  createZipSink,
+  grainLevel,
   groupFolder,
   libraryEntries,
 } from "../library";
@@ -28,6 +31,23 @@ describe("groupFolder", () => {
     expect(groupFolder(base, "colorFamily")).toBe(groupFolder(base, "colorFamily")));
   it("uses the archive root for 'none'", () =>
     expect(groupFolder(base, "none")).toBe(""));
+  it("groups by grain band", () =>
+    expect(groupFolder(cfg({ grain: 0.12 }), "grain")).toBe("grain-heavy"));
+  it("groups by duration", () =>
+    expect(groupFolder(cfg({ duration: 8 }), "duration")).toBe("duration-8s"));
+});
+
+describe("grainLevel", () => {
+  it("bands the schema range from clean to heavy", () => {
+    expect(grainLevel(0)).toBe("clean");
+    expect(grainLevel(0.009)).toBe("clean");
+    expect(grainLevel(0.01)).toBe("subtle");
+    expect(grainLevel(0.049)).toBe("subtle");
+    expect(grainLevel(0.05)).toBe("medium");
+    expect(grainLevel(0.099)).toBe("medium");
+    expect(grainLevel(0.1)).toBe("heavy");
+    expect(grainLevel(0.2)).toBe("heavy");
+  });
 });
 
 describe("clipBasename", () => {
@@ -81,5 +101,55 @@ describe("buildManifest", () => {
       libraryEntries(configs, settings, "family", "mp4").map((e) => e.videoPath),
     );
     expect(m.generatedAt).toBe("2026-07-20T00:00:00Z");
+  });
+
+  it("carries duration and grain band so the new group axes are filterable", () => {
+    const configs = [cfg({ family: "mesh", seed: 1, duration: 10, grain: 0.15 })];
+    const [item] = buildManifest(configs, settings, "grain", "mp4").items;
+    expect(item.duration).toBe(10);
+    expect(item.grainLevel).toBe("heavy");
+  });
+});
+
+describe("createZipSink", () => {
+  async function unzip(blob: Blob) {
+    return unzipSync(new Uint8Array(await blob.arrayBuffer()));
+  }
+
+  it("packs nested paths and binary content into a readable archive", async () => {
+    const sink = createZipSink();
+    const clip = Uint8Array.from({ length: 1024 }, (_, i) => i % 256);
+    sink.add("mesh/drifting-tide.mp4", clip);
+    sink.add("mesh/drifting-tide.json", strToU8('{"seed":1}'));
+    sink.add("manifest.json", strToU8('{"count":1}'));
+
+    const files = await unzip(await sink.finish());
+    expect(Object.keys(files)).toEqual([
+      "mesh/drifting-tide.mp4",
+      "mesh/drifting-tide.json",
+      "manifest.json",
+    ]);
+    expect(files["mesh/drifting-tide.mp4"]).toEqual(clip);
+    expect(new TextDecoder().decode(files["manifest.json"])).toBe('{"count":1}');
+  });
+
+  it("stays valid when the output spans several buffered parts", async () => {
+    const sink = createZipSink();
+    const chunk = new Uint8Array(5 * 1024 * 1024).fill(7);
+    for (let i = 0; i < 3; i++) sink.add(`clip-${i}.mp4`, chunk);
+
+    const files = await unzip(await sink.finish());
+    expect(Object.keys(files)).toHaveLength(3);
+    expect(files["clip-2.mp4"].length).toBe(chunk.length);
+    expect(files["clip-1.mp4"].every((b) => b === 7)).toBe(true);
+  });
+
+  it("stores rather than deflates", async () => {
+    const sink = createZipSink();
+    const compressible = new Uint8Array(64 * 1024);
+    sink.add("clip.mp4", compressible);
+    const blob = await sink.finish();
+    expect(blob.size).toBeGreaterThan(compressible.length);
+    expect(blob.type).toBe("application/zip");
   });
 });

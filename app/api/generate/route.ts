@@ -50,7 +50,18 @@ Family guide:
 - rain: streaks falling at different depths, rainy-window feel
 - chevron: zigzag color bands marching steadily, sporty graphic feel
 - sweep: a clean linear gradient whose direction slowly rotates, ultra-minimal
-- ridge: layered mountain ridgelines drifting in parallax, landscape feel
+- marble: liquid marbling with flowing colored veins, luxurious organic feel
+- caustics: refracted networks of underwater light, luminous aquatic feel
+- ink: soft ink blooms expanding and folding into one another, expressive organic feel
+- bubbles: translucent iridescent bubbles drifting through depth, playful soft feel
+- checker: a warped checkerboard rippling in perspective, kinetic graphic feel
+- tunnel: a radial retro tunnel with repeating depth, energetic synthwave feel
+- maze: animated circuit-like labyrinth tiles, precise technological feel
+- orbitals: elliptical paths with glowing bodies in motion, elegant astronomical feel
+- plasma: layered sine fields producing vivid liquid color, classic digital feel
+- glitch: sliced blocks with rhythmic RGB displacement, disruptive experimental feel
+- equalizer: rows of spectrum bars pulsing in waves, musical graphic feel
+- radar: luminous sweep, range rings and blinking targets, interface sci-fi feel
 
 Pick colors that match the mood of the user's request. Prefer speed 1 and duration 8-12 for ambient backgrounds unless the request implies energy.`;
 

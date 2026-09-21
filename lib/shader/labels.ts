@@ -25,7 +25,18 @@ export const FAMILY_LABELS: Record<Family, string> = {
   rain: "Rain streaks",
   chevron: "Chevron flow",
   sweep: "Gradient sweep",
-  ridge: "Ridge lines",
+  marble: "Liquid marble",
+  caustics: "Light caustics",
+  ink: "Ink blooms",
+  bubbles: "Iridescent bubbles",
+  checker: "Kinetic checker",
+  tunnel: "Retro tunnel",
+  maze: "Circuit maze",
+  orbitals: "Orbital paths",
+  plasma: "Color plasma",
+  glitch: "Digital glitch",
+  equalizer: "Spectrum bars",
+  radar: "Radar sweep",
 };
 
 export const familyItems = FAMILIES.map((f) => ({
