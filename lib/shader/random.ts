@@ -1,5 +1,10 @@
 import { PALETTES } from "./palettes";
-import { FAMILIES, type Family, type ShaderConfig } from "./schema";
+import {
+  FAMILIES,
+  type Family,
+  type MotionDNA,
+  type ShaderConfig,
+} from "./schema";
 
 /** mulberry32 — deterministic PRNG so a seed always regenerates the same look */
 export function mulberry32(seed: number): () => number {
@@ -61,7 +66,6 @@ const TUNING: Record<
   marble: { scale: [0.6, 1.5], warp: [0.45, 1.0], complexity: [0.4, 1.0] },
   caustics: { scale: [0.7, 1.7], warp: [0.2, 0.8], complexity: [0.35, 0.9] },
   ink: { scale: [0.65, 1.5], warp: [0.4, 1.0], complexity: [0.3, 0.9] },
-  bubbles: { scale: [0.7, 1.8], warp: [0.1, 0.7], complexity: [0.25, 0.9] },
   checker: { scale: [0.65, 1.8], warp: [0.1, 0.75], complexity: [0.2, 0.85] },
   tunnel: { scale: [0.65, 1.5], warp: [0.15, 0.75], complexity: [0.25, 0.9] },
   maze: { scale: [0.7, 1.8], warp: [0.0, 0.55], complexity: [0.25, 0.9] },
@@ -71,6 +75,15 @@ const TUNING: Record<
   equalizer: { scale: [0.7, 1.8], warp: [0.0, 0.6], complexity: [0.25, 0.9] },
   radar: { scale: [0.65, 1.4], warp: [0.05, 0.6], complexity: [0.25, 0.9] },
 };
+
+function motionForFamily(family: Family): MotionDNA {
+  if (["mesh", "breath", "sweep", "aurora", "prism"].includes(family)) return "calm";
+  if (["silk", "smoke", "lava", "marble", "ink", "caustics"].includes(family)) return "fluid";
+  if (["rings", "kaleido", "spiral", "tunnel", "weave", "plasma"].includes(family)) return "hypnotic";
+  if (["rays", "ribbons", "chevron", "checker", "equalizer"].includes(family)) return "energetic";
+  if (["grid", "hex", "maze", "radar", "glitch", "cells"].includes(family)) return "tech";
+  return "cinematic";
+}
 
 export function randomConfig(seed?: number): ShaderConfig {
   const s = seed ?? Math.floor(Math.random() * 1_000_000);
@@ -88,7 +101,14 @@ export function randomConfig(seed?: number): ShaderConfig {
     complexity: lerp(t.complexity[0], t.complexity[1], rng()),
     warp: lerp(t.warp[0], t.warp[1], rng()),
     grain: 0.03 + rng() * 0.05,
+    sharpness: 0.2 + rng() * 0.35,
     vignette: 0.25 + rng() * 0.35,
     duration: [6, 8, 10, 12][Math.floor(rng() * 4)],
+    secondaryFamily: null,
+    blendMode: "mix",
+    blendAmount: 0.5,
+    motionDNA: motionForFamily(family),
+    bpm: 120,
+    beats: 16,
   };
 }

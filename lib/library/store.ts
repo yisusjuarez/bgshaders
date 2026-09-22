@@ -21,8 +21,15 @@ export function configSignature(c: ShaderConfig): string {
     c.complexity,
     c.warp,
     c.grain,
+    c.sharpness,
     c.vignette,
     c.duration,
+    c.secondaryFamily,
+    c.blendMode,
+    c.blendAmount,
+    c.motionDNA,
+    c.bpm,
+    c.beats,
     c.colors.map((x) => x.toLowerCase()),
   ]);
 }

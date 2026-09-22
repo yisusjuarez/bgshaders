@@ -7,6 +7,17 @@ export interface ExportSettings {
   height: number;
   fps: 30 | 60;
   format: "mp4" | "webm";
+  quality?: "balanced" | "high" | "master";
+}
+
+function targetBitrate(settings: ExportSettings, webm = false): number {
+  const multiplier = settings.quality === "master"
+    ? 0.34
+    : settings.quality === "high"
+      ? 0.22
+      : webm ? 0.1 : 0.12;
+  const cap = settings.quality === "master" ? 80_000_000 : settings.quality === "high" ? 50_000_000 : 30_000_000;
+  return Math.min(cap, Math.round(settings.width * settings.height * settings.fps * multiplier));
 }
 
 export interface ExportResult {
@@ -80,7 +91,7 @@ export async function renderMp4Blob(
     width,
     height,
     framerate: fps,
-    bitrate: Math.min(30_000_000, Math.round(width * height * fps * 0.12)),
+    bitrate: targetBitrate(settings),
   });
 
   try {
@@ -139,7 +150,7 @@ export async function renderWebmBlob(
   }
   const rec = new MediaRecorder(stream, {
     mimeType: mime,
-    videoBitsPerSecond: Math.min(24_000_000, Math.round(width * height * fps * 0.1)),
+    videoBitsPerSecond: targetBitrate(settings, true),
   });
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);

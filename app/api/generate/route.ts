@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { FAMILIES, shaderConfigSchema, type ShaderConfig } from "@/lib/shader/schema";
+import {
+  BLEND_MODES,
+  FAMILIES,
+  MOTION_DNAS,
+  shaderConfigSchema,
+  type ShaderConfig,
+} from "@/lib/shader/schema";
 
 const requestSchema = z.object({
   prompt: z.string().min(1).max(500),
@@ -18,12 +24,19 @@ Schema:
   "family": one of ${JSON.stringify(FAMILIES)},
   "colors": string[2..6],    // #rrggbb hex, ordered dark → light; first color anchors the background
   "speed": 1 | 2 | 3,        // integer cycles per loop; 1 = calm, 3 = energetic
-  "scale": 0.4..3,           // pattern zoom; lower = bigger shapes
+  "scale": 0.4..3,           // pattern size; higher = bigger, visually softer shapes
   "complexity": 0..1,        // layer density
   "warp": 0..1,              // organic distortion amount
   "grain": 0..0.2,           // film grain
+  "sharpness": -1..1,        // -1 soft focus, 0 neutral, 1 crisp detail
   "vignette": 0..1,          // edge darkening
-  "duration": 2..30          // loop length in seconds
+  "duration": 2..30,         // loop length in seconds
+  "secondaryFamily": one of ${JSON.stringify(FAMILIES)} or null,
+  "blendMode": one of ${JSON.stringify(BLEND_MODES)},
+  "blendAmount": 0..1,
+  "motionDNA": one of ${JSON.stringify(MOTION_DNAS)},
+  "bpm": integer 30..240,
+  "beats": integer 1..64
 }
 
 Family guide:
@@ -53,7 +66,6 @@ Family guide:
 - marble: liquid marbling with flowing colored veins, luxurious organic feel
 - caustics: refracted networks of underwater light, luminous aquatic feel
 - ink: soft ink blooms expanding and folding into one another, expressive organic feel
-- bubbles: translucent iridescent bubbles drifting through depth, playful soft feel
 - checker: a warped checkerboard rippling in perspective, kinetic graphic feel
 - tunnel: a radial retro tunnel with repeating depth, energetic synthwave feel
 - maze: animated circuit-like labyrinth tiles, precise technological feel
@@ -75,6 +87,9 @@ function repair(raw: Record<string, unknown>): ShaderConfig | null {
   const colors = Array.isArray(raw.colors)
     ? raw.colors.filter((c): c is string => typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c)).slice(0, 6)
     : [];
+  const bpm = Math.round(num(raw.bpm, 30, 240, 120));
+  const beats = Math.round(num(raw.beats, 1, 64, 16));
+  const beatDuration = (60 * beats) / bpm;
   const candidate = {
     name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 60) : "Untitled Loop",
     family: FAMILIES.includes(raw.family as never) ? raw.family : "mesh",
@@ -85,8 +100,20 @@ function repair(raw: Record<string, unknown>): ShaderConfig | null {
     complexity: num(raw.complexity, 0, 1, 0.6),
     warp: num(raw.warp, 0, 1, 0.4),
     grain: num(raw.grain, 0, 0.2, 0.05),
+    sharpness: num(raw.sharpness, -1, 1, 0.25),
     vignette: num(raw.vignette, 0, 1, 0.4),
-    duration: num(raw.duration, 2, 30, 10),
+    duration:
+      beatDuration >= 2 && beatDuration <= 30
+        ? beatDuration
+        : num(raw.duration, 2, 30, 10),
+    secondaryFamily: FAMILIES.includes(raw.secondaryFamily as never)
+      ? raw.secondaryFamily
+      : null,
+    blendMode: BLEND_MODES.includes(raw.blendMode as never) ? raw.blendMode : "mix",
+    blendAmount: num(raw.blendAmount, 0, 1, 0.45),
+    motionDNA: MOTION_DNAS.includes(raw.motionDNA as never) ? raw.motionDNA : "fluid",
+    bpm,
+    beats,
   };
   const parsed = shaderConfigSchema.safeParse(candidate);
   return parsed.success ? parsed.data : null;

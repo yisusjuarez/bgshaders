@@ -1,6 +1,6 @@
 "use client";
 
-import { Dices } from "lucide-react";
+import { PaletteEditor } from "@/components/palette-editor";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { familyItems } from "@/lib/shader/labels";
-import { PALETTES } from "@/lib/shader/palettes";
 import { type Family, type ShaderConfig } from "@/lib/shader/schema";
 
 interface Props {
@@ -26,6 +25,7 @@ function Row({
   max,
   step,
   format,
+  hint,
   onChange,
 }: {
   label: string;
@@ -34,6 +34,7 @@ function Row({
   max: number;
   step: number;
   format: (v: number) => string;
+  hint?: string;
   onChange: (v: number) => void;
 }) {
   return (
@@ -54,19 +55,12 @@ function Row({
         onValueChange={(v) => onChange(Array.isArray(v) ? v[0] : v)}
         aria-label={label}
       />
+      {hint && <p className="text-[10px] leading-4 text-white/40">{hint}</p>}
     </div>
   );
 }
 
 export function ParamsPanel({ config, onChange }: Props) {
-  const shufflePalette = () => {
-    const others = PALETTES.filter(
-      (p) => p.colors.join() !== config.colors.join(),
-    );
-    const next = others[Math.floor(Math.random() * others.length)];
-    onChange({ colors: [...next.colors] });
-  };
-
   return (
     <aside
       className="fixed top-1/2 right-4 z-20 max-h-[85vh] w-72 max-w-[calc(100vw-2rem)] -translate-y-1/2 overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/55 p-5 text-white shadow-2xl backdrop-blur-xl"
@@ -96,25 +90,14 @@ export function ParamsPanel({ config, onChange }: Props) {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
-              Palette
-            </span>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-6 text-white/70 hover:bg-white/10 hover:text-white"
-              onClick={shufflePalette}
-              aria-label="Shuffle palette"
-            >
-              <Dices className="size-3.5" />
-            </Button>
-          </div>
-          <div className="flex h-7 overflow-hidden rounded-lg border border-white/10">
-            {config.colors.map((c, i) => (
-              <div key={i} className="flex-1" style={{ background: c }} title={c} />
-            ))}
-          </div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
+            Palette
+          </span>
+          <PaletteEditor
+            colors={config.colors}
+            onChange={(colors) => onChange({ colors })}
+            compact
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -157,12 +140,13 @@ export function ParamsPanel({ config, onChange }: Props) {
           onChange={(v) => onChange({ duration: v })}
         />
         <Row
-          label="Scale"
+          label="Pattern size"
           value={config.scale}
           min={0.4}
           max={3}
           step={0.05}
           format={(v) => v.toFixed(2)}
+          hint="Higher values enlarge and soften the forms. Lower values reveal finer detail."
           onChange={(v) => onChange({ scale: v })}
         />
         <Row
@@ -191,6 +175,15 @@ export function ParamsPanel({ config, onChange }: Props) {
           step={0.005}
           format={(v) => v.toFixed(3)}
           onChange={(v) => onChange({ grain: v })}
+        />
+        <Row
+          label="Sharpness"
+          value={config.sharpness}
+          min={-1}
+          max={1}
+          step={0.05}
+          format={(v) => v < -0.05 ? `Soft ${Math.round(-v * 100)}%` : v > 0.05 ? `Crisp ${Math.round(v * 100)}%` : "Neutral"}
+          onChange={(v) => onChange({ sharpness: v })}
         />
         <Row
           label="Vignette"

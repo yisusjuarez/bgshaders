@@ -28,7 +28,6 @@ export const FAMILY_LABELS: Record<Family, string> = {
   marble: "Liquid marble",
   caustics: "Light caustics",
   ink: "Ink blooms",
-  bubbles: "Iridescent bubbles",
   checker: "Kinetic checker",
   tunnel: "Retro tunnel",
   maze: "Circuit maze",

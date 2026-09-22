@@ -1,5 +1,5 @@
-import { fragmentSource, VERTEX_SRC } from "./glsl";
-import { hexToRgb, type Family, type ShaderConfig } from "./schema";
+import { fragmentSource, layeredFragmentSource, VERTEX_SRC } from "./glsl";
+import { hexToRgb, type ShaderConfig } from "./schema";
 
 const UNIFORM_NAMES = [
   "u_res",
@@ -12,7 +12,9 @@ const UNIFORM_NAMES = [
   "u_complexity",
   "u_warp",
   "u_grain",
+  "u_sharpness",
   "u_vignette",
+  "u_blend_amount",
 ] as const;
 
 type UniformMap = Record<(typeof UNIFORM_NAMES)[number], WebGLUniformLocation | null>;
@@ -20,7 +22,7 @@ type UniformMap = Record<(typeof UNIFORM_NAMES)[number], WebGLUniformLocation | 
 export class ShaderRenderer {
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram | null = null;
-  private family: Family | null = null;
+  private programKey: string | null = null;
   private uniforms: UniformMap | null = null;
 
   constructor(
@@ -53,11 +55,17 @@ export class ShaderRenderer {
     return shader;
   }
 
-  private useFamily(family: Family) {
-    if (this.family === family && this.program) return;
+  private useConfig(config: ShaderConfig) {
+    const key = config.secondaryFamily
+      ? `${config.family}:${config.secondaryFamily}:${config.blendMode}`
+      : config.family;
+    if (this.programKey === key && this.program) return;
     const gl = this.gl;
     const vs = this.compile(gl.VERTEX_SHADER, VERTEX_SRC);
-    const fs = this.compile(gl.FRAGMENT_SHADER, fragmentSource(family));
+    const source = config.secondaryFamily
+      ? layeredFragmentSource(config.family, config.secondaryFamily, config.blendMode)
+      : fragmentSource(config.family);
+    const fs = this.compile(gl.FRAGMENT_SHADER, source);
     const program = gl.createProgram()!;
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
@@ -71,7 +79,7 @@ export class ShaderRenderer {
     }
     if (this.program) gl.deleteProgram(this.program);
     this.program = program;
-    this.family = family;
+    this.programKey = key;
     this.uniforms = Object.fromEntries(
       UNIFORM_NAMES.map((n) => [n, gl.getUniformLocation(program, n)]),
     ) as UniformMap;
@@ -81,7 +89,7 @@ export class ShaderRenderer {
    *  config + phase + size always produces identical pixels. */
   render(config: ShaderConfig, phase: number, width: number, height: number) {
     const gl = this.gl;
-    this.useFamily(config.family);
+    this.useConfig(config);
     if (gl.canvas.width !== width) gl.canvas.width = width;
     if (gl.canvas.height !== height) gl.canvas.height = height;
     gl.viewport(0, 0, width, height);
@@ -99,7 +107,9 @@ export class ShaderRenderer {
     gl.uniform1f(u.u_complexity, config.complexity);
     gl.uniform1f(u.u_warp, config.warp);
     gl.uniform1f(u.u_grain, config.grain);
+    gl.uniform1f(u.u_sharpness, config.sharpness);
     gl.uniform1f(u.u_vignette, config.vignette);
+    gl.uniform1f(u.u_blend_amount, config.blendAmount);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -113,7 +123,7 @@ export class ShaderRenderer {
   dispose(opts: { releaseContext?: boolean } = {}) {
     if (this.program) this.gl.deleteProgram(this.program);
     this.program = null;
-    this.family = null;
+    this.programKey = null;
     if (opts.releaseContext ?? true) {
       this.gl.getExtension("WEBGL_lose_context")?.loseContext();
     }

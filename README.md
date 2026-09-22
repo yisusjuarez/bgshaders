@@ -25,8 +25,30 @@ npm run dev
 
 Open http://localhost:3000.
 
-- **Space** play/pause · **R** random design · **G** AI generate · **P** parameters
+- **Space** play/pause · **R** random design · **G** AI generate · **C** Loop Designer · **L** Pack Builder · **P** parameters
 - `?seed=N` in the URL reproduces a specific random design.
+
+## Loop Designer and Pack Builder
+
+- **Loop Designer** edits only the current loop: it blends two shader families with
+  mix, screen, multiply or difference and controls its palette, movement and timing.
+- **Beat sync** converts BPM and beat count into a mathematically exact loop length.
+- **Venue Preview** shows the current loop on a projection screen, concert LED
+  wall, and projection-mapped immersive room.
+- Palettes can use a preset or 2–6 individually editable custom colors.
+- **Pack Builder & Batch Export** owns every multi-loop workflow: Directed Pack
+  creates a coherent sale-ready collection, Matrix Batch creates all chosen
+  combinations, and Random Batch explores the design space.
+- Every multi-loop method adds to the same **Tray**. The ZIP export always renders
+  exactly the loops currently in that Tray.
+- Pack ZIPs default to a searchable structure: `catalog.html` provides visual
+  previews and combined filters for type, color, speed and motion; `index.csv`
+  works in spreadsheets and asset managers; filenames and JSON sidecars retain
+  the same searchable tags. Legacy single-axis folders remain optional.
+- Export finishing can override sharpness, grain and vignette for one video or
+  normalize the entire pack. High/Master encoding preserves fine detail.
+
+OpenRouter key and model selection live inside the **Generate with AI** dialog.
 
 ## AI generator (OpenRouter)
 

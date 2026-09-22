@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ShaderRenderer } from "@/lib/shader/renderer";
 import type { ShaderConfig } from "@/lib/shader/schema";
+import { cn } from "@/lib/utils";
 
 interface Props {
   config: ShaderConfig;
@@ -10,9 +11,10 @@ interface Props {
   /** Mutable ref the canvas writes the current phase into each frame, so the
    *  loop ring can animate without re-rendering React at 60fps. */
   phaseRef: React.MutableRefObject<number>;
+  className?: string;
 }
 
-export function ShaderCanvas({ config, playing, phaseRef }: Props) {
+export function ShaderCanvas({ config, playing, phaseRef, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const configRef = useRef(config);
   const playingRef = useRef(playing);
@@ -78,7 +80,7 @@ export function ShaderCanvas({ config, playing, phaseRef }: Props) {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 h-full w-full"
+      className={cn("fixed inset-0 h-full w-full", className)}
       aria-hidden="true"
     />
   );

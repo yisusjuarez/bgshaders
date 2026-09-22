@@ -1,4 +1,4 @@
-import type { Family } from "./schema";
+import type { BlendMode, Family } from "./schema";
 
 /**
  * Loop-safety contract: `u_phase` is in [0,1) and time may ONLY enter a shader
@@ -25,7 +25,9 @@ uniform float u_scale;
 uniform float u_complexity;
 uniform float u_warp;
 uniform float u_grain;
+uniform float u_sharpness;
 uniform float u_vignette;
+uniform float u_blend_amount;
 out vec4 fragColor;
 #define TAU 6.28318530718
 
@@ -49,6 +51,14 @@ void main() {
   uv /= u_scale;
   float T = TAU * u_phase * u_speed;
   vec3 col = scene(uv, T);
+  if (abs(u_sharpness) > 0.001) {
+    vec2 px = vec2(1.0 / min(u_res.x, u_res.y) / u_scale, 0.0);
+    vec3 soft = (scene(uv + px, T) + scene(uv - px, T)
+      + scene(uv + px.yx, T) + scene(uv - px.yx, T) + col * 4.0) / 8.0;
+    col = u_sharpness < 0.0
+      ? mix(col, soft, -u_sharpness)
+      : col + (col - soft) * u_sharpness * 3.0;
+  }
   float vd = length((frag - 0.5 * u_res) / u_res);
   col *= 1.0 - u_vignette * smoothstep(0.35, 0.9, vd);
   // static grain: loop-safe by construction and dithers gradient banding
@@ -627,30 +637,6 @@ vec3 scene(vec2 p, float T) {
   return mix(paper, inkCol, fill * 0.88) + pal(0.9) * contour * 0.22;
 }
 `,
-  // Transparent bubbles drift on closed paths with iridescent rims.
-  bubbles: `
-vec3 scene(vec2 p, float T) {
-  vec3 col = mix(pal(0.08), pal(0.35), 0.5 + 0.35 * p.y) * 0.45;
-  float n = mix(5.0, 13.0, u_complexity);
-  for (int i = 0; i < 13; i++) {
-    float fi = float(i);
-    if (fi >= n) break;
-    float k1 = 1.0 + floor(hash(fi + 181.0) * 3.0);
-    float k2 = 1.0 + floor(hash(fi + 183.0) * 2.0);
-    float ph = TAU * hash(fi + 187.0);
-    vec2 base = (vec2(hash(fi + 191.0), hash(fi + 193.0)) - 0.5) * 1.75;
-    vec2 c = base + (0.1 + 0.25 * u_warp) * vec2(sin(k1 * T + ph), cos(k2 * T + ph));
-    float r = 0.07 + 0.18 * hash(fi + 197.0);
-    float d = length(p - c);
-    float rim = exp(-pow((d - r) / (0.012 + r * 0.08), 2.0));
-    float glass = (1.0 - smoothstep(0.0, r, d)) * 0.12;
-    float sheen = 0.5 + 0.5 * sin(atan(p.y - c.y, p.x - c.x) * 2.0 + T + ph);
-    col = mix(col, pal(fract(hash(fi + 199.0) + sheen * 0.35)), glass);
-    col += pal(fract(hash(fi + 199.0) + sheen * 0.45)) * rim * 0.38;
-  }
-  return col;
-}
-`,
   // A checkerboard flexes like a sheet while color pulses cross its cells.
   checker: `
 vec3 scene(vec2 p, float T) {
@@ -835,4 +821,62 @@ vec3 scene(vec2 p, float T) {
 
 export function fragmentSource(family: Family): string {
   return PRELUDE + SCENES[family] + MAIN;
+}
+
+function namespaceScene(source: string, suffix: "A" | "B"): string {
+  return source
+    .replace(/\bscene\b/g, `scene${suffix}`)
+    .replace(/\bglitchField\b/g, `glitchField${suffix}`);
+}
+
+const BLEND_GLSL: Record<BlendMode, string> = {
+  mix: "mix(primary, secondary, u_blend_amount)",
+  screen:
+    "mix(primary, 1.0 - (1.0 - primary) * (1.0 - secondary), u_blend_amount)",
+  multiply: "mix(primary, primary * secondary * 1.35, u_blend_amount)",
+  difference: "mix(primary, abs(primary - secondary), u_blend_amount)",
+};
+
+/** Build one fragment program containing two independently evaluated scenes. */
+export function layeredFragmentSource(
+  primary: Family,
+  secondary: Family,
+  blendMode: BlendMode,
+): string {
+  const main = `
+vec3 renderLayers(vec2 uv, float T) {
+  vec3 primary = sceneA(uv, T);
+  vec2 uv2 = mat2(0.9397, -0.3420, 0.3420, 0.9397) * uv * 1.08;
+  uv2 += 0.045 * vec2(sin(T), cos(T));
+  vec3 secondary = sceneB(uv2, -T);
+  return ${BLEND_GLSL[blendMode]};
+}
+
+void main() {
+  vec2 frag = gl_FragCoord.xy;
+  vec2 uv = (frag - 0.5 * u_res) / min(u_res.x, u_res.y);
+  uv /= u_scale;
+  float T = TAU * u_phase * u_speed;
+  vec3 col = renderLayers(uv, T);
+  if (abs(u_sharpness) > 0.001) {
+    vec2 px = vec2(1.0 / min(u_res.x, u_res.y) / u_scale, 0.0);
+    vec3 soft = (renderLayers(uv + px, T) + renderLayers(uv - px, T)
+      + renderLayers(uv + px.yx, T) + renderLayers(uv - px.yx, T) + col * 4.0) / 8.0;
+    col = u_sharpness < 0.0
+      ? mix(col, soft, -u_sharpness)
+      : col + (col - soft) * u_sharpness * 3.0;
+  }
+  float vd = length((frag - 0.5 * u_res) / u_res);
+  col *= 1.0 - u_vignette * smoothstep(0.35, 0.9, vd);
+  float g = fract(sin(dot(frag, vec2(12.9898, 78.233))) * 43758.5453);
+  col += (g - 0.5) * u_grain;
+  fragColor = vec4(col, 1.0);
+}
+`;
+  return (
+    PRELUDE +
+    namespaceScene(SCENES[primary], "A") +
+    namespaceScene(SCENES[secondary], "B") +
+    main
+  );
 }

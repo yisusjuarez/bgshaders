@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AiDialog } from "@/components/ai-dialog";
 import { ControlDock } from "@/components/control-dock";
+import { LoopDesignerDialog } from "@/components/creative-studio-dialog";
 import { ExportDialog } from "@/components/export-dialog";
 import { LibraryDialog } from "@/components/library-dialog";
 import { ParamsPanel } from "@/components/params-panel";
-import { SettingsDialog } from "@/components/settings-dialog";
 import { ShaderCanvas } from "@/components/shader-canvas";
 import {
   addConfigs,
@@ -18,8 +18,8 @@ import {
 import { randomConfig } from "@/lib/shader/random";
 import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
 
-// Fixed seed so server and client render the same initial config (no
-// hydration mismatch); every interaction after that is client-only.
+// Hydration-safe placeholder. The URL/bootstrap effect replaces it with a
+// fresh random design before normal interaction begins.
 const INITIAL_SEED = 421;
 
 export default function Home() {
@@ -29,7 +29,7 @@ export default function Home() {
   const [playing, setPlaying] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [creativeOpen, setCreativeOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [library, setLibraryList] = useState<ShaderConfig[]>([]);
@@ -59,7 +59,7 @@ export default function Home() {
   );
   const addCurrent = useCallback(() => {
     const added = addToLibrary([config]);
-    toast(added ? "Added to library" : "Already in library");
+    toast(added ? "Added to pack tray" : "Already in pack tray");
   }, [addToLibrary, config]);
 
   // Hydrate the tray from localStorage post-mount (SSR-safe).
@@ -78,8 +78,9 @@ export default function Home() {
     }
   }, []);
 
-  // ?seed=N reproduces a design; ?family=name forces a family. Applied
-  // post-hydration to keep the server and client initial render identical.
+  // ?seed=N reproduces a design; ?family=name forces a family. With no seed,
+  // every app load starts from a fresh design. Applied post-hydration so the
+  // server and client initial markup stays identical.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const seedParam = params.get("seed");
@@ -92,8 +93,9 @@ export default function Home() {
       const cfg = randomConfig(Math.floor(seed) % 1_000_000);
       // eslint-disable-next-line react-hooks/set-state-in-effect -- must run post-hydration; deriving config from the URL during the initial render would desync server and client markup
       setConfig(family ? { ...cfg, family } : cfg);
-    } else if (family) {
-      setConfig((c) => ({ ...c, family }));
+    } else {
+      const cfg = randomConfig();
+      setConfig(family ? { ...cfg, family } : cfg);
     }
   }, []);
 
@@ -106,7 +108,7 @@ export default function Home() {
       ) {
         return;
       }
-      if (aiOpen || settingsOpen || exportOpen || libraryOpen) return;
+      if (aiOpen || creativeOpen || exportOpen || libraryOpen) return;
       if (e.code === "Space") {
         e.preventDefault();
         setPlaying((p) => !p);
@@ -116,13 +118,15 @@ export default function Home() {
         setAiOpen(true);
       } else if (e.key === "p" || e.key === "P") {
         setPanelOpen((o) => !o);
+      } else if (e.key === "c" || e.key === "C") {
+        setCreativeOpen(true);
       } else if (e.key === "l" || e.key === "L") {
         setLibraryOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [aiOpen, settingsOpen, exportOpen, libraryOpen, randomize]);
+  }, [aiOpen, creativeOpen, exportOpen, libraryOpen, randomize]);
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-zinc-950">
@@ -141,7 +145,9 @@ export default function Home() {
         <div className="pointer-events-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-zinc-950/45 px-3 py-1.5 backdrop-blur-xl">
           <span className="text-[13px] font-medium text-white">{config.name}</span>
           <span className="font-mono text-[10px] tracking-[0.14em] text-white/55 uppercase">
-            {config.family} · {config.duration}s · seed {config.seed}
+            {config.family}
+            {config.secondaryFamily ? ` + ${config.secondaryFamily}` : ""} ·{" "}
+            {config.motionDNA} · {config.bpm} bpm · seed {config.seed}
           </span>
         </div>
       </header>
@@ -157,8 +163,8 @@ export default function Home() {
         onTogglePlay={() => setPlaying((p) => !p)}
         onRandomize={randomize}
         onAi={() => setAiOpen(true)}
+        onCreative={() => setCreativeOpen(true)}
         onTogglePanel={() => setPanelOpen((o) => !o)}
-        onSettings={() => setSettingsOpen(true)}
         onExport={() => setExportOpen(true)}
         onAddToLibrary={addCurrent}
         onOpenLibrary={() => setLibraryOpen(true)}
@@ -168,17 +174,21 @@ export default function Home() {
         open={aiOpen}
         onOpenChange={setAiOpen}
         onGenerated={(c) => setConfig(c)}
-        onNeedSettings={() => {
-          setAiOpen(false);
-          setSettingsOpen(true);
-        }}
       />
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {creativeOpen && (
+        <LoopDesignerDialog
+          open
+          onOpenChange={setCreativeOpen}
+          config={config}
+          onChange={patch}
+        />
+      )}
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} config={config} />
       <LibraryDialog
         open={libraryOpen}
         onOpenChange={setLibraryOpen}
         library={library}
+        currentConfig={config}
         onAdd={addToLibrary}
         onRemove={(i) => commitLibrary(removeAt(libraryRef.current, i))}
         onClear={() => commitLibrary([])}

@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { ShaderRenderer } from "@/lib/shader/renderer";
 import { randomConfig } from "@/lib/shader/random";
-import { FAMILIES } from "@/lib/shader/schema";
+import { FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
 import { exportMp4, webCodecsSupported } from "@/lib/export/encode";
 
 const SIZE = 96;
@@ -95,6 +95,53 @@ export default function GlTest() {
             );
           } catch (e) {
             out.push(`${family}: FAIL ${e instanceof Error ? e.message : e}`);
+          }
+        }
+
+        // Representative layered programs cover every blend mode, helper-name
+        // namespacing (glitch+glitch), and exact closure of both scenes.
+        const layeredCases: [Family, Family, BlendMode][] = [
+          ["mesh", "silk", "mix"],
+          ["kaleido", "radar", "screen"],
+          ["caustics", "checker", "multiply"],
+          ["glitch", "glitch", "difference"],
+        ];
+        for (const [primary, secondary, blendMode] of layeredCases) {
+          try {
+            let worstExact = 0;
+            let worstSeam = 0;
+            let worstAdjacent = 0;
+            for (const seed of SEEDS.slice(0, 5)) {
+              const cfg = {
+                ...randomConfig(seed),
+                family: primary,
+                secondaryFamily: secondary,
+                blendMode,
+                blendAmount: 0.55,
+              };
+              renderer.render(cfg, 0, SIZE, SIZE);
+              const first = readPixels(gl);
+              renderer.render(cfg, 1, SIZE, SIZE);
+              const wrapped = readPixels(gl);
+              renderer.render(cfg, 299 / 300, SIZE, SIZE);
+              const last = readPixels(gl);
+              renderer.render(cfg, 298 / 300, SIZE, SIZE);
+              const beforeLast = readPixels(gl);
+              const exact = meanDiff(first, wrapped);
+              const seam = meanDiff(last, first);
+              const adjacent = meanDiff(beforeLast, last);
+              worstExact = Math.max(worstExact, exact);
+              worstSeam = Math.max(worstSeam, seam);
+              worstAdjacent = Math.max(worstAdjacent, adjacent);
+            }
+            const perfect = worstExact === 0 && worstSeam <= worstAdjacent * 2 + 0.5;
+            out.push(
+              `layer ${primary}+${secondary}/${blendMode}: OK exact=${worstExact.toFixed(4)} seam=${worstSeam.toFixed(3)} adjacent=${worstAdjacent.toFixed(3)} ${perfect ? "LOOP-PERFECT" : "LOOP-SUSPECT"}`,
+            );
+          } catch (e) {
+            out.push(
+              `layer ${primary}+${secondary}/${blendMode}: FAIL ${e instanceof Error ? e.message : e}`,
+            );
           }
         }
       } catch (e) {

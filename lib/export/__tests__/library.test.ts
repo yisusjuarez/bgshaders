@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import { strToU8, unzipSync } from "fflate";
 import {
   buildManifest,
+  catalogHtml,
   clipBasename,
   createZipSink,
   grainLevel,
   groupFolder,
   libraryEntries,
+  manifestCsv,
 } from "../library";
 import type { ExportSettings } from "../encode";
 import { PALETTES } from "@/lib/shader/palettes";
@@ -31,6 +33,8 @@ describe("groupFolder", () => {
     expect(groupFolder(base, "colorFamily")).toBe(groupFolder(base, "colorFamily")));
   it("uses the archive root for 'none'", () =>
     expect(groupFolder(base, "none")).toBe(""));
+  it("uses catalog-managed paths for 'catalog'", () =>
+    expect(groupFolder(base, "catalog")).toBe(""));
   it("groups by grain band", () =>
     expect(groupFolder(cfg({ grain: 0.12 }), "grain")).toBe("grain-heavy"));
   it("groups by duration", () =>
@@ -87,6 +91,14 @@ describe("libraryEntries", () => {
     expect(e.meta.url).toBe(`/?seed=3&family=${c.family}`);
     expect(e.meta.format).toBe("mp4");
   });
+
+  it("uses tagged searchable names and separate metadata in catalog mode", () => {
+    const c = cfg({ family: "mesh", name: "Quiet Signal", seed: 5, speed: 2 });
+    const [e] = libraryEntries([c], settings, "catalog", "mp4");
+    expect(e.videoPath).toContain("loops/quiet-signal__mesh__");
+    expect(e.videoPath).toContain("__speed-2__seed-5.mp4");
+    expect(e.jsonPath).toMatch(/^metadata\//);
+  });
 });
 
 describe("buildManifest", () => {
@@ -108,6 +120,30 @@ describe("buildManifest", () => {
     const [item] = buildManifest(configs, settings, "grain", "mp4").items;
     expect(item.duration).toBe(10);
     expect(item.grainLevel).toBe("heavy");
+  });
+});
+
+describe("searchable catalog", () => {
+  const manifest = buildManifest(
+    [cfg({ name: "Blue Drift", family: "silk", speed: 1, motionDNA: "fluid" })],
+    settings,
+    "catalog",
+    "mp4",
+    "2026-07-20T00:00:00Z",
+  );
+
+  it("creates a spreadsheet index with multidimensional tags", () => {
+    const csv = manifestCsv(manifest);
+    expect(csv).toContain('"colorFamily"');
+    expect(csv).toContain('"motionDNA"');
+    expect(csv).toContain('"silk|Silk waves|');
+  });
+
+  it("creates an offline HTML catalog with search and filters", () => {
+    const html = catalogHtml(manifest);
+    expect(html).toContain('id="q"');
+    expect(html).toContain('id="family"');
+    expect(html).toContain("Blue Drift");
   });
 });
 

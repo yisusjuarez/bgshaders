@@ -83,4 +83,22 @@ describe("parseLibrary", () => {
       valid,
     ]);
   });
+
+  it("migrates legacy single-layer configs with creative defaults", () => {
+    const current = randomConfig(8);
+    const legacy = { ...current } as Record<string, unknown>;
+    for (const key of [
+      "secondaryFamily",
+      "blendMode",
+      "blendAmount",
+      "motionDNA",
+      "bpm",
+      "beats",
+    ]) delete legacy[key];
+    const [migrated] = parseLibrary(JSON.stringify([legacy]));
+    expect(migrated.secondaryFamily).toBeNull();
+    expect(migrated.blendMode).toBe("mix");
+    expect(migrated.motionDNA).toBe("fluid");
+    expect(migrated.bpm).toBe(120);
+  });
 });

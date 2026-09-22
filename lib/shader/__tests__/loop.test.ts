@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { fragmentSource } from "../glsl";
+import { fragmentSource, layeredFragmentSource } from "../glsl";
 import { mulberry32, randomConfig } from "../random";
 import { FAMILIES, hexToRgb, shaderConfigSchema } from "../schema";
 
 describe("shaderConfigSchema", () => {
   it("exposes the expanded catalog without the retired ridge family", () => {
-    expect(FAMILIES).toHaveLength(35);
+    expect(FAMILIES).toHaveLength(34);
     expect(FAMILIES).not.toContain("ridge");
     expect(FAMILIES).toEqual(
       expect.arrayContaining([
         "marble",
         "caustics",
         "ink",
-        "bubbles",
         "checker",
         "tunnel",
         "maze",
@@ -96,6 +95,16 @@ describe("loop-safety of shader sources", () => {
       expect(src).toContain("void main()");
       expect(src).toContain("uniform float u_phase");
     }
+  });
+
+  it("namespaces two scenes into one loop-safe layered shader", () => {
+    const src = layeredFragmentSource("mesh", "glitch", "screen");
+    expect(src).toContain("vec3 sceneA(");
+    expect(src).toContain("vec3 sceneB(");
+    expect(src).toContain("float glitchFieldB(");
+    expect(src).toContain("uniform float u_blend_amount");
+    expect(src).toContain("TAU * u_phase * u_speed");
+    expect(src.match(/void main\(\)/g)).toHaveLength(1);
   });
 });
 

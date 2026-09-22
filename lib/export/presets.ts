@@ -12,3 +12,9 @@ export const FPS_OPTIONS = [
   { value: "30", label: "30 fps" },
   { value: "60", label: "60 fps" },
 ];
+
+export const QUALITY_OPTIONS = [
+  { value: "balanced", label: "Balanced · smaller file" },
+  { value: "high", label: "High · recommended" },
+  { value: "master", label: "Master · maximum detail" },
+] as const;

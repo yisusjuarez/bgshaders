@@ -1,6 +1,7 @@
 import { strToU8, Zip, ZipPassThrough } from "fflate";
 import { colorFamily, matchPaletteName } from "@/lib/library/color";
 import { ShaderRenderer } from "@/lib/shader/renderer";
+import { FAMILY_LABELS } from "@/lib/shader/labels";
 import type { ShaderConfig } from "@/lib/shader/schema";
 import {
   clipExtension,
@@ -11,6 +12,7 @@ import {
 } from "./encode";
 
 export type GroupBy =
+  | "catalog"
   | "family"
   | "palette"
   | "speed"
@@ -37,6 +39,8 @@ export type ClipExt = "mp4" | "webm";
 /** Folder a clip lands in for the chosen grouping axis ("" = archive root). */
 export function groupFolder(config: ShaderConfig, groupBy: GroupBy): string {
   switch (groupBy) {
+    case "catalog":
+      return "";
     case "family":
       return config.family;
     case "speed":
@@ -80,6 +84,7 @@ export function clipMetadata(
     complexity: config.complexity,
     warp: config.warp,
     grain: config.grain,
+    sharpness: config.sharpness,
     vignette: config.vignette,
     colors: config.colors,
     palette: matchPaletteName(config.colors),
@@ -118,8 +123,11 @@ export function libraryEntries(
   const used = new Set<string>();
   return configs.map((config) => {
     const group = groupFolder(config, groupBy);
-    let base = clipBasename(config, settings);
-    const dir = group ? `${group}/` : "";
+    const color = colorFamily(config.colors);
+    let base = groupBy === "catalog"
+      ? `${safeName(config.name)}__${config.family}__${color}__${config.motionDNA}__speed-${config.speed}__seed-${config.seed}`
+      : clipBasename(config, settings);
+    const dir = groupBy === "catalog" ? "loops/" : group ? `${group}/` : "";
     if (used.has(`${dir}${base}`)) {
       let n = 2;
       while (used.has(`${dir}${base}-${n}`)) n++;
@@ -130,7 +138,7 @@ export function libraryEntries(
       config,
       group,
       videoPath: `${dir}${base}.${ext}`,
-      jsonPath: `${dir}${base}.json`,
+      jsonPath: groupBy === "catalog" ? `metadata/${base}.json` : `${dir}${base}.json`,
       meta: clipMetadata(config, settings, ext),
     };
   });
@@ -153,6 +161,13 @@ export interface LibraryManifest {
     palette: string | null;
     colorFamily: string;
     grainLevel: GrainLevel;
+    secondaryFamily: string | null;
+    blendMode: string;
+    motionDNA: string;
+    bpm: number;
+    beats: number;
+    sharpness: number;
+    tags: string[];
   }[];
 }
 
@@ -181,8 +196,53 @@ export function buildManifest(
       palette: e.meta.palette,
       colorFamily: e.meta.colorFamily,
       grainLevel: e.meta.grainLevel,
+      secondaryFamily: e.config.secondaryFamily,
+      blendMode: e.config.blendMode,
+      motionDNA: e.config.motionDNA,
+      bpm: e.config.bpm,
+      beats: e.config.beats,
+      sharpness: e.config.sharpness,
+      tags: [
+        e.config.family,
+        FAMILY_LABELS[e.config.family],
+        e.meta.colorFamily,
+        e.meta.palette ?? "custom-palette",
+        e.config.motionDNA,
+        `speed-${e.config.speed}`,
+        `${e.config.duration}s`,
+        e.config.secondaryFamily ? "layered" : "single-layer",
+      ],
     })),
   };
+}
+
+function csvCell(value: unknown): string {
+  const text = Array.isArray(value) ? value.join("|") : String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+/** Spreadsheet-friendly index for marketplaces, DAM tools and local search. */
+export function manifestCsv(manifest: LibraryManifest): string {
+  const columns: (keyof LibraryManifest["items"][number])[] = [
+    "file", "name", "family", "secondaryFamily", "colorFamily", "palette",
+    "motionDNA", "speed", "duration", "bpm", "beats", "grainLevel",
+    "sharpness", "blendMode", "seed", "tags",
+  ];
+  return [
+    columns.map(csvCell).join(","),
+    ...manifest.items.map((item) => columns.map((column) => csvCell(item[column])).join(",")),
+  ].join("\n");
+}
+
+/** Portable offline catalog: open catalog.html directly from the exported ZIP. */
+export function catalogHtml(manifest: LibraryManifest): string {
+  const data = JSON.stringify(manifest.items).replaceAll("<", "\\u003c");
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>jedylabs loop catalog</title><style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui;background:#09090b;color:#fafafa}*{box-sizing:border-box}body{margin:0;padding:28px}header{position:sticky;top:0;z-index:2;padding:0 0 18px;background:linear-gradient(#09090b 82%,transparent)}h1{font-size:20px;margin:0 0 6px}p{margin:0;color:#a1a1aa;font-size:13px}.filters{display:grid;grid-template-columns:2fr repeat(4,1fr);gap:8px;margin-top:16px}input,select{width:100%;border:1px solid #ffffff20;border-radius:9px;background:#18181b;color:#fff;padding:10px}.count{margin:12px 0;color:#a1a1aa;font-size:12px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.card{overflow:hidden;border:1px solid #ffffff16;border-radius:14px;background:#18181b}video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000}.meta{padding:12px}.name{font-weight:650}.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.tag{border-radius:99px;background:#ffffff12;padding:4px 7px;color:#d4d4d8;font:10px ui-monospace,monospace}a{color:inherit;text-decoration:none}@media(max-width:760px){body{padding:16px}.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}}
+</style></head><body><header><h1>jedylabs loop catalog</h1><p>Search and combine filters. Hover a loop to preview it.</p><div class="filters"><input id="q" type="search" placeholder="Search name, family, color, palette or tag…"><select id="family"><option value="">All types</option></select><select id="color"><option value="">All colors</option></select><select id="speed"><option value="">All speeds</option></select><select id="motion"><option value="">All motion</option></select></div><div class="count" id="count"></div></header><main class="grid" id="grid"></main>
+<script>const items=${data};const $=id=>document.getElementById(id);const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const fields=['family','color','speed','motion'];const key={family:'family',color:'colorFamily',speed:'speed',motion:'motionDNA'};for(const f of fields){for(const v of [...new Set(items.map(x=>String(x[key[f]])))].sort()){const o=document.createElement('option');o.value=v;o.textContent=f==='speed'?'Speed '+v:v;$(f).append(o)}}function render(){const q=$('q').value.toLowerCase();const shown=items.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&fields.every(f=>!$(f).value||String(x[key[f]])===$(f).value));$('count').textContent=shown.length+' of '+items.length+' loops';$('grid').innerHTML=shown.map(x=>'<article class="card"><video muted loop playsinline preload="metadata" src="'+esc(x.file)+'" onmouseenter="this.play()" onmouseleave="this.pause()"></video><div class="meta"><a class="name" href="'+esc(x.file)+'">'+esc(x.name)+'</a><div class="tags">'+x.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div></div></article>').join('')}for(const el of document.querySelectorAll('input,select'))el.addEventListener('input',render);render();</script></body></html>`;
 }
 
 /** Two-level progress: which clip, and how far through the current clip. */
@@ -319,9 +379,11 @@ export async function exportLibrary(
     onProgress(entries.length, entries.length, 100);
     const manifest = buildManifest(configs, settings, opts.groupBy, ext);
     sink.add("manifest.json", strToU8(JSON.stringify(manifest, null, 2)));
+    sink.add("index.csv", strToU8(manifestCsv(manifest)));
+    sink.add("catalog.html", strToU8(catalogHtml(manifest)));
     return {
       blob: await sink.finish(),
-      filename: `jedylabs-library-${entries.length}-clips.zip`,
+      filename: `jedylabs-pack-${entries.length}-loops.zip`,
     };
   } catch (error) {
     sink.terminate();

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -27,7 +28,7 @@ import {
   webCodecsSupported,
   type ExportSettings,
 } from "@/lib/export/encode";
-import { FPS_OPTIONS, RESOLUTIONS } from "@/lib/export/presets";
+import { FPS_OPTIONS, QUALITY_OPTIONS, RESOLUTIONS } from "@/lib/export/presets";
 import type { ShaderConfig } from "@/lib/shader/schema";
 
 interface Props {
@@ -39,6 +40,10 @@ interface Props {
 export function ExportDialog({ open, onOpenChange, config }: Props) {
   const [resolution, setResolution] = useState("1920x1080");
   const [fps, setFps] = useState("30");
+  const [quality, setQuality] = useState<"balanced" | "high" | "master">("high");
+  const [sharpness, setSharpness] = useState<number | null>(null);
+  const [grain, setGrain] = useState<number | null>(null);
+  const [vignette, setVignette] = useState<number | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const mp4 = webCodecsSupported();
@@ -48,6 +53,13 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
   const busy = progress !== null;
   const [width, height] = resolution.split("x").map(Number);
   const frames = Math.round(config.duration * Number(fps));
+  const exportConfig: ShaderConfig = {
+    ...config,
+    sharpness: sharpness ?? config.sharpness,
+    grain: grain ?? config.grain,
+    vignette: vignette ?? config.vignette,
+  };
+  const customFinish = sharpness !== null || grain !== null || vignette !== null;
 
   const start = async () => {
     const settings: ExportSettings = {
@@ -55,13 +67,14 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
       height,
       fps: Number(fps) as 30 | 60,
       format: mp4 ? "mp4" : "webm",
+      quality,
     };
     const abort = new AbortController();
     abortRef.current = abort;
     setProgress(0);
     try {
       const result = await exportVideo(
-        config,
+        exportConfig,
         settings,
         (done, total) => setProgress(Math.round((done / total) * 100)),
         abort.signal,
@@ -122,6 +135,36 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Label>Output finishing</Label>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">Overrides only this exported file; the current loop stays unchanged.</p>
+              </div>
+              {customFinish && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => { setSharpness(null); setGrain(null); setVignette(null); }}
+                >
+                  Use design values
+                </Button>
+              )}
+            </div>
+            <ExportSlider
+              label="Sharpness"
+              value={exportConfig.sharpness}
+              min={-1}
+              max={1}
+              step={0.05}
+              display={exportConfig.sharpness < -0.05 ? `Soft ${Math.round(-exportConfig.sharpness * 100)}%` : exportConfig.sharpness > 0.05 ? `Crisp ${Math.round(exportConfig.sharpness * 100)}%` : "Neutral"}
+              disabled={busy}
+              onChange={setSharpness}
+            />
+            <ExportSlider label="Grain" value={exportConfig.grain} min={0} max={0.2} step={0.005} display={exportConfig.grain.toFixed(3)} disabled={busy} onChange={setGrain} />
+            <ExportSlider label="Vignette" value={exportConfig.vignette} min={0} max={1} step={0.01} display={`${Math.round(exportConfig.vignette * 100)}%`} disabled={busy} onChange={setVignette} />
+          </div>
           <div className="space-y-2">
             <Label>Frame rate</Label>
             <Select
@@ -142,10 +185,26 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Encoding quality</Label>
+            <Select
+              items={QUALITY_OPTIONS.map((option) => ({ ...option }))}
+              value={quality}
+              onValueChange={(value) => value && setQuality(value as typeof quality)}
+              disabled={busy}
+            >
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {QUALITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <p className="font-mono text-[11px] text-muted-foreground">
             {mp4
-              ? `MP4 · H.264 · ${width}×${height} @ ${fps} fps`
-              : `WebM (this browser has no WebCodecs; realtime capture) · ${width}×${height}`}
+              ? `MP4 · H.264 · ${width}×${height} @ ${fps} fps · ${quality}`
+              : `WebM (this browser has no WebCodecs; realtime capture) · ${width}×${height} · ${quality}`}
           </p>
           {busy && (
             <div className="space-y-1.5">
@@ -175,5 +234,43 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ExportSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  display,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  display: string;
+  disabled: boolean;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-white/65">{label}</span>
+        <span className="font-mono text-white/80">{display}</span>
+      </div>
+      <Slider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        aria-label={`Export ${label}`}
+        onValueChange={(next) => onChange(Array.isArray(next) ? next[0] : next)}
+      />
+    </div>
   );
 }
