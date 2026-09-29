@@ -75,6 +75,13 @@ Family guide:
 - glitch: sliced blocks with rhythmic RGB displacement, disruptive experimental feel
 - equalizer: rows of spectrum bars pulsing in waves, musical graphic feel
 - radar: luminous sweep, range rings and blinking targets, interface sci-fi feel
+- hologram: iridescent interference stripes with subtle scanlines
+- accretion: bright rotating disk surrounding a dark center
+- fractals: folded, self-similar filaments and branching boundaries
+- noise: layered animated value noise with fine granular detail
+- waves: broad stacked water-like wave bands with bright crests
+- singularity: dark event horizon with gravitationally bent light arcs
+- warpedNoise: smooth turbulent noise displaced by other noise fields
 
 Pick colors that match the mood of the user's request. Prefer speed 1 and duration 8-12 for ambient backgrounds unless the request implies energy.`;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GitFork } from "lucide-react";
 import { AiDialog } from "@/components/ai-dialog";
 import { ControlDock } from "@/components/control-dock";
 import { LoopDesignerDialog } from "@/components/creative-studio-dialog";
@@ -135,16 +136,22 @@ export default function Home() {
           <h1 className="font-mono text-sm font-semibold tracking-[0.28em] lowercase">
             jedylabs
           </h1>
-          <span className="font-mono text-[10px] tracking-[0.2em] text-white/60 uppercase">
+          <span className="hidden font-mono text-[10px] tracking-[0.2em] text-white/60 uppercase sm:inline">
             {t("loop studio")}
           </span>
           </div>
-          <div className="pointer-events-auto flex shrink-0 rounded-full border border-white/15 bg-zinc-950/60 p-0.5 font-mono text-[10px] backdrop-blur-xl" role="group" aria-label={language === "es" ? "Idioma" : "Language"}>
+          <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+          <a href="https://github.com/yisusjuarez/bgshaders" target="_blank" rel="noopener noreferrer" aria-label={t("Contribute on GitHub")} title={t("Contribute on GitHub")} className="flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-zinc-950/60 px-2.5 font-mono text-[10px] text-white/80 backdrop-blur-xl transition-colors hover:border-white/35 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            <GitFork className="size-3.5" aria-hidden="true" />
+            <span>GitHub</span>
+          </a>
+          <div className="flex rounded-full border border-white/15 bg-zinc-950/60 p-0.5 font-mono text-[10px] backdrop-blur-xl" role="group" aria-label={language === "es" ? "Idioma" : "Language"}>
             {(["es", "en"] as const).map((option) => (
               <button key={option} type="button" onClick={() => setLanguage(option)} aria-pressed={language === option} aria-label={option === "es" ? "Español" : "English"} className={`rounded-full px-2.5 py-1 transition-colors ${language === option ? "bg-white text-zinc-950" : "text-white/65 hover:text-white"}`}>
                 {option.toUpperCase()}
               </button>
             ))}
+          </div>
           </div>
         </div>
         <div className="pointer-events-auto flex min-w-0 w-fit max-w-full flex-col gap-0.5 rounded-2xl border border-white/10 bg-zinc-950/60 px-3 py-2 backdrop-blur-xl sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:py-1.5">

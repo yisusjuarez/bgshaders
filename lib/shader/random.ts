@@ -74,14 +74,21 @@ const TUNING: Record<
   glitch: { scale: [0.7, 1.8], warp: [0.15, 0.85], complexity: [0.25, 0.9] },
   equalizer: { scale: [0.7, 1.8], warp: [0.0, 0.6], complexity: [0.25, 0.9] },
   radar: { scale: [0.65, 1.4], warp: [0.05, 0.6], complexity: [0.25, 0.9] },
+  hologram: { scale: [0.7, 1.6], warp: [0.1, 0.55], complexity: [0.35, 0.85] },
+  accretion: { scale: [0.65, 1.45], warp: [0.15, 0.7], complexity: [0.4, 0.95] },
+  fractals: { scale: [0.7, 1.4], warp: [0.15, 0.65], complexity: [0.35, 0.9] },
+  noise: { scale: [0.7, 1.6], warp: [0.0, 0.5], complexity: [0.3, 0.9] },
+  waves: { scale: [0.7, 1.7], warp: [0.15, 0.7], complexity: [0.3, 0.9] },
+  singularity: { scale: [0.65, 1.45], warp: [0.1, 0.55], complexity: [0.35, 0.9] },
+  warpedNoise: { scale: [0.7, 1.5], warp: [0.45, 1.0], complexity: [0.45, 0.95] },
 };
 
 function motionForFamily(family: Family): MotionDNA {
-  if (["mesh", "breath", "sweep", "aurora", "prism"].includes(family)) return "calm";
-  if (["silk", "smoke", "lava", "marble", "ink", "caustics"].includes(family)) return "fluid";
-  if (["rings", "kaleido", "spiral", "tunnel", "weave", "plasma"].includes(family)) return "hypnotic";
+  if (["mesh", "breath", "sweep", "aurora", "prism", "waves"].includes(family)) return "calm";
+  if (["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise"].includes(family)) return "fluid";
+  if (["rings", "kaleido", "spiral", "tunnel", "weave", "plasma", "fractals", "accretion", "singularity"].includes(family)) return "hypnotic";
   if (["rays", "ribbons", "chevron", "checker", "equalizer"].includes(family)) return "energetic";
-  if (["grid", "hex", "maze", "radar", "glitch", "cells"].includes(family)) return "tech";
+  if (["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram"].includes(family)) return "tech";
   return "cinematic";
 }
 

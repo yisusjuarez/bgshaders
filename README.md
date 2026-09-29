@@ -1,7 +1,7 @@
 # jedylabs — loop studio
 
 Generate seamless looping background videos in the browser: animated WebGL
-shaders with modern designs, randomized or AI-generated, exported as MP4.
+shaders with modern designs, randomized or edited by hand, exported as MP4.
 
 ## Why the loops are perfect
 
@@ -29,11 +29,15 @@ Open http://localhost:3000.
 - `?seed=N` in the URL reproduces a specific random design.
 - Use the **ES / EN** switch in the top bar to change the interface language.
   The choice is saved in the browser; first-time visitors use their browser language.
+- Use the **GitHub** button in the top bar to view the source and contribute.
 
 ## Main workflow
 
 - **Edit** contains the current loop's design, fine controls and venue preview.
   Changes appear immediately behind the dialog.
+- **Random** samples all 41 loop types, including hologram, accretion, fractals,
+  noise, waves, singularity, warped noise, and the existing aurora, plasma,
+  smoke, nebula, and lava lamp effects.
 - **Beat sync** converts BPM and beat count into a mathematically exact loop length.
 - Palettes can use a preset or 2–6 individually editable custom colors.
 - **Pack** adds the current loop or creates a group of loops. Guided creation is

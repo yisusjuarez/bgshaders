@@ -35,6 +35,17 @@ float hash(float n) {
   return fract(sin(n * 127.1 + fract(u_seed * 0.1031) * 311.7) * 43758.5453);
 }
 
+float valueNoise(vec2 p, float T) {
+  vec2 id = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = 0.5 + 0.5 * sin(T + TAU * hash(id.x * 127.1 + id.y * 311.7));
+  float b = 0.5 + 0.5 * sin(T + TAU * hash((id.x + 1.0) * 127.1 + id.y * 311.7));
+  float c = 0.5 + 0.5 * sin(T + TAU * hash(id.x * 127.1 + (id.y + 1.0) * 311.7));
+  float d = 0.5 + 0.5 * sin(T + TAU * hash((id.x + 1.0) * 127.1 + (id.y + 1.0) * 311.7));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 vec3 pal(float t) {
   t = clamp(t, 0.0, 1.0);
   float f = t * float(u_ncolors - 1);
@@ -815,6 +826,115 @@ vec3 scene(vec2 p, float T) {
   col = mix(col, dotCol, smoothstep(r, r - 0.06, d));
   col += dotCol * exp(-d * d * 9.0) * pulse * 0.22;
   return col;
+}
+`,
+  // Transparent-looking interference stripes with a moving iridescent sheen.
+  hologram: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p + 0.08 * u_warp * vec2(sin(p.y * 8.0 + T), cos(p.x * 7.0 - T));
+  float bands = sin(q.x * (12.0 + 12.0 * u_complexity) + q.y * 5.0 + 2.0 * T);
+  float foil = sin(q.x * 5.0 - q.y * 8.0 - T + 0.8 * bands);
+  float scan = pow(0.5 + 0.5 * sin(q.y * 70.0 + T), 8.0);
+  float edge = pow(0.5 + 0.5 * sin(q.x * 31.0 + q.y * 19.0 + T), 18.0);
+  vec3 col = pal(0.5 + 0.32 * bands + 0.18 * foil);
+  col = mix(col * 0.42, col, 0.55 + 0.45 * foil);
+  return col + pal(0.85) * (scan * 0.12 + edge * 0.3);
+}
+`,
+  // An elliptical hot disk of particles circling a dark core.
+  accretion: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = vec2(p.x, p.y * 2.25);
+  float r = length(q) + 0.0001;
+  float a = atan(q.y, q.x);
+  float swirl = sin(a * 9.0 - 2.0 * T + r * 24.0);
+  float disk = smoothstep(0.16, 0.25, r) * (1.0 - smoothstep(0.68, 0.94, r));
+  float streaks = pow(0.5 + 0.5 * sin(a * (16.0 + 10.0 * u_complexity) - 2.0 * T + r * 34.0 + u_warp * swirl), 5.0);
+  float inner = exp(-pow((r - 0.24) * 10.0, 2.0));
+  vec3 col = pal(0.04) * 0.14;
+  col += pal(0.42 + 0.32 * streaks) * disk * (0.18 + 0.6 * streaks);
+  col += pal(0.9) * inner * 0.75;
+  float voidMask = 1.0 - smoothstep(0.11, 0.17, r);
+  return mix(col, pal(0.0) * 0.025, voidMask);
+}
+`,
+  // Repeated plane folding creates branching self-similar boundaries.
+  fractals: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p * (1.5 + u_complexity);
+  float angle = 0.2 * sin(T);
+  mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+  q = rot * q;
+  float trace = 0.0;
+  float weight = 1.0;
+  for (int i = 0; i < 6; i++) {
+    q = abs(q) / max(dot(q, q), 0.16) - vec2(0.88, 0.55);
+    q += 0.07 * u_warp * vec2(sin(T), cos(T));
+    trace += weight * exp(-15.0 * abs(length(q) - 0.75));
+    weight *= 0.63;
+  }
+  float filaments = clamp(trace * 0.68, 0.0, 1.0);
+  vec3 col = pal(0.14 + 0.72 * filaments);
+  return mix(pal(0.02) * 0.22, col, 0.22 + 0.78 * filaments);
+}
+`,
+  // Grainy, multi-scale value-noise tiles with animated corner values.
+  noise: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p * (5.0 + 7.0 * u_complexity);
+  q += u_warp * 0.25 * vec2(sin(T), cos(T));
+  float coarse = valueNoise(q, T);
+  float fine = valueNoise(q * 2.0, 2.0 * T);
+  float detail = valueNoise(q * 4.0, 3.0 * T);
+  float v = clamp(0.58 * coarse + 0.29 * fine + 0.13 * detail, 0.0, 1.0);
+  float contour = smoothstep(0.44, 0.48, v) - smoothstep(0.53, 0.57, v);
+  return pal(v) + pal(0.9) * contour * 0.08;
+}
+`,
+  // Broad stacked water-like waves with distinct bright crests.
+  waves: `
+vec3 scene(vec2 p, float T) {
+  vec3 col = pal(clamp(0.22 + 0.2 * p.y, 0.0, 1.0)) * 0.55;
+  for (int i = 0; i < 7; i++) {
+    float fi = float(i);
+    float y = -0.75 + fi * 0.25;
+    float crest = y + (0.07 + 0.1 * u_warp) * sin(p.x * (2.6 + fi * 0.27) + T + fi * 0.8)
+                    + 0.035 * sin(p.x * 6.0 - 2.0 * T + fi);
+    float below = 1.0 - smoothstep(crest - 0.035, crest + 0.035, p.y);
+    float gleam = exp(-pow((p.y - crest) * 24.0, 2.0));
+    col = mix(col, pal(0.2 + fi * 0.11), below * (0.45 + 0.25 * u_complexity));
+    col += pal(0.8) * gleam * (0.08 + 0.04 * sin(T + fi));
+  }
+  return col;
+}
+`,
+  // Gravitational lens with a dark event horizon and curved light arcs.
+  singularity: `
+vec3 scene(vec2 p, float T) {
+  float r = length(p) + 0.0001;
+  float a = atan(p.y, p.x);
+  float bend = a + (0.25 + 0.5 * u_warp) / (r + 0.18);
+  float lens = exp(-pow((r - 0.35) * 9.0, 2.0));
+  float arcs = pow(0.5 + 0.5 * sin(12.0 * bend + T + r * 6.0), 14.0) * lens;
+  float photon = exp(-pow((r - 0.29) * 35.0, 2.0));
+  float outer = exp(-pow((r - 0.63) * 8.0, 2.0)) * (0.5 + 0.5 * sin(7.0 * bend - T));
+  vec3 col = pal(0.02) * 0.1 + pal(0.66) * (arcs * 0.8 + outer * 0.25);
+  col += pal(0.98) * photon * 0.95;
+  float horizon = 1.0 - smoothstep(0.18, 0.23, r);
+  return mix(col, pal(0.0) * 0.01, horizon);
+}
+`,
+  // Smooth value noise displaced by two independently animated noise fields.
+  warpedNoise: `
+vec3 scene(vec2 p, float T) {
+  vec2 q = p * (2.1 + u_complexity * 1.2);
+  vec2 offset = vec2(valueNoise(q + vec2(7.3, 1.2), T),
+                     valueNoise(q + vec2(-2.1, 9.4), 2.0 * T)) - 0.5;
+  vec2 warped = q + offset * (1.0 + 3.0 * u_warp);
+  float a = valueNoise(warped * 1.6, T);
+  float b = valueNoise(warped * 3.2 + 4.7, 2.0 * T);
+  float v = clamp(a * 0.76 + b * 0.24, 0.0, 1.0);
+  return pal(smoothstep(0.25, 0.75, v));
 }
 `,
 };

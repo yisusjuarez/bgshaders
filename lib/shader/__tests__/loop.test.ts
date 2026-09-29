@@ -5,7 +5,8 @@ import { FAMILIES, hexToRgb, shaderConfigSchema } from "../schema";
 
 describe("shaderConfigSchema", () => {
   it("exposes the expanded catalog without the retired ridge family", () => {
-    expect(FAMILIES).toHaveLength(34);
+    expect(FAMILIES).toHaveLength(41);
+    expect(new Set(FAMILIES).size).toBe(FAMILIES.length);
     expect(FAMILIES).not.toContain("ridge");
     expect(FAMILIES).toEqual(
       expect.arrayContaining([
@@ -20,6 +21,13 @@ describe("shaderConfigSchema", () => {
         "glitch",
         "equalizer",
         "radar",
+        "hologram",
+        "accretion",
+        "fractals",
+        "noise",
+        "waves",
+        "singularity",
+        "warpedNoise",
       ]),
     );
   });
@@ -55,7 +63,7 @@ describe("randomConfig", () => {
   it("covers every family", () => {
     const seen = new Set<string>();
     for (let s = 0; s < 2000; s++) seen.add(randomConfig(s).family);
-    expect(seen.size).toBe(FAMILIES.length);
+    expect(seen).toEqual(new Set(FAMILIES));
   });
 });
 

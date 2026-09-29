@@ -15,7 +15,7 @@ export const FAMILY_LABELS: Record<Family, string> = {
   halftone: "Halftone print",
   nebula: "Star nebula",
   topo: "Contour lines",
-  lava: "Lava blobs",
+  lava: "Lava lamp",
   kaleido: "Kaleidoscope",
   hex: "Hex tiles",
   weave: "Wave weave",
@@ -36,6 +36,13 @@ export const FAMILY_LABELS: Record<Family, string> = {
   glitch: "Digital glitch",
   equalizer: "Spectrum bars",
   radar: "Radar sweep",
+  hologram: "Hologram",
+  accretion: "Accretion disk",
+  fractals: "Fractals",
+  noise: "Noise",
+  waves: "Waves",
+  singularity: "Singularity",
+  warpedNoise: "Warped noise",
 };
 
 export const familyItems = FAMILIES.map((f) => ({

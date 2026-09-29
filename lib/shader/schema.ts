@@ -35,6 +35,13 @@ export const FAMILIES = [
   "glitch",
   "equalizer",
   "radar",
+  "hologram",
+  "accretion",
+  "fractals",
+  "noise",
+  "waves",
+  "singularity",
+  "warpedNoise",
 ] as const;
 
 export type Family = (typeof FAMILIES)[number];

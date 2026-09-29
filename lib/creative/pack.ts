@@ -24,7 +24,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   calm: {
     label: "Calm",
     description: "Slow, spacious and quiet",
-    families: ["mesh", "breath", "sweep", "aurora", "prism"],
+    families: ["mesh", "breath", "sweep", "aurora", "prism", "waves"],
     speed: 1,
     scale: [0.65, 1.15],
     complexity: [0.25, 0.55],
@@ -37,7 +37,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   fluid: {
     label: "Fluid",
     description: "Organic, soft and continuously flowing",
-    families: ["silk", "smoke", "lava", "marble", "ink", "caustics"],
+    families: ["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise"],
     speed: 1,
     scale: [0.7, 1.4],
     complexity: [0.45, 0.8],
@@ -50,7 +50,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   hypnotic: {
     label: "Hypnotic",
     description: "Repetition, symmetry and deep focus",
-    families: ["rings", "kaleido", "spiral", "tunnel", "weave", "plasma"],
+    families: ["rings", "kaleido", "spiral", "tunnel", "weave", "plasma", "fractals", "singularity"],
     speed: 1,
     scale: [0.75, 1.35],
     complexity: [0.55, 0.9],
@@ -63,7 +63,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   energetic: {
     label: "Energetic",
     description: "Fast, bold and rhythm-forward",
-    families: ["rays", "ribbons", "chevron", "checker", "plasma", "equalizer"],
+    families: ["rays", "ribbons", "chevron", "checker", "plasma", "equalizer", "accretion"],
     speed: 2,
     scale: [0.85, 1.75],
     complexity: [0.55, 0.92],
@@ -76,7 +76,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   tech: {
     label: "Tech",
     description: "Precise, digital and interface-like",
-    families: ["grid", "hex", "maze", "radar", "glitch", "cells"],
+    families: ["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram"],
     speed: 2,
     scale: [0.9, 1.65],
     complexity: [0.5, 0.88],
