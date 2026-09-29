@@ -59,7 +59,7 @@ export function DirectedPackBuilder({ initialConfig, onCreate }: Props) {
   return (
     <div className="space-y-5 pt-2 sm:max-h-[52vh] sm:overflow-y-auto sm:pr-1">
       <div className="rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-3 text-[12px] leading-5 text-white/65">
-        <strong className="text-white">{t("Directed Pack")}</strong> {t("creates multiple related loops for one sellable collection. They share palette, motion and timing, but remain visually varied. It adds them to the Tray and does not change the loop currently playing.")}
+        {t("Creates related loops using the current palette and movement.")}
       </div>
 
       <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-[1fr_110px]">
@@ -84,6 +84,9 @@ export function DirectedPackBuilder({ initialConfig, onCreate }: Props) {
         </div>
       </div>
 
+      <details className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <summary className="cursor-pointer text-sm font-medium">{t("Customize pack")}</summary>
+        <div className="mt-4 space-y-5">
       <div className="space-y-2">
         <div>
           <Label>{t("Shared motion direction")}</Label>
@@ -106,11 +109,13 @@ export function DirectedPackBuilder({ initialConfig, onCreate }: Props) {
         </div>
         <Switch checked={layered} onCheckedChange={setLayered} />
       </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4">
         <Button variant="ghost" size="sm" onClick={() => setBaseSeed(Math.floor(Math.random() * 1_000_000))}>
           <Shuffle className="size-4" /> {t("Seed")} {baseSeed}
         </Button>
+        </div>
+      </details>
+
+      <div className="flex justify-end border-t border-white/10 pt-4">
         <Button onClick={generate}>
           <PackagePlus className="size-4" /> {t("Generate & add")} {count} {t("to tray")}
         </Button>

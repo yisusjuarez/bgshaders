@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { AiDialog } from "@/components/ai-dialog";
 import { ControlDock } from "@/components/control-dock";
 import { LoopDesignerDialog } from "@/components/creative-studio-dialog";
 import { ExportDialog } from "@/components/export-dialog";
 import { LibraryDialog } from "@/components/library-dialog";
 import { useLanguage } from "@/components/language-provider";
-import { ParamsPanel } from "@/components/params-panel";
 import { ShaderCanvas } from "@/components/shader-canvas";
 import { AI_ENABLED } from "@/lib/features";
 import {
@@ -32,10 +30,10 @@ export default function Home() {
     randomConfig(INITIAL_SEED),
   );
   const [playing, setPlaying] = useState(true);
-  const [panelOpen, setPanelOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [creativeOpen, setCreativeOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState<"current" | "pack">("current");
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [library, setLibraryList] = useState<ShaderConfig[]>([]);
   const libraryRef = useRef<ShaderConfig[]>([]);
@@ -62,11 +60,6 @@ export default function Home() {
     },
     [commitLibrary],
   );
-  const addCurrent = useCallback(() => {
-    const added = addToLibrary([config]);
-    toast(t(added ? "Added to pack tray" : "Already in pack tray"));
-  }, [addToLibrary, config, t]);
-
   // Hydrate the tray from localStorage post-mount (SSR-safe).
   useEffect(() => {
     const stored = getLibrary();
@@ -121,8 +114,6 @@ export default function Home() {
         randomize();
       } else if (AI_ENABLED && (e.key === "g" || e.key === "G")) {
         setAiOpen(true);
-      } else if (e.key === "p" || e.key === "P") {
-        setPanelOpen((o) => !o);
       } else if (e.key === "c" || e.key === "C") {
         setCreativeOpen(true);
       } else if (e.key === "l" || e.key === "L") {
@@ -166,21 +157,16 @@ export default function Home() {
         </div>
       </header>
 
-      {panelOpen && <ParamsPanel config={config} onChange={patch} />}
-
       <ControlDock
         config={config}
         playing={playing}
         phaseRef={phaseRef}
-        panelOpen={panelOpen}
         libraryCount={library.length}
         onTogglePlay={() => setPlaying((p) => !p)}
         onRandomize={randomize}
         onAi={() => setAiOpen(true)}
         onCreative={() => setCreativeOpen(true)}
-        onTogglePanel={() => setPanelOpen((o) => !o)}
-        onExport={() => setExportOpen(true)}
-        onAddToLibrary={addCurrent}
+        onExport={() => { setExportTarget("current"); setExportOpen(true); }}
         onOpenLibrary={() => setLibraryOpen(true)}
       />
 
@@ -199,7 +185,7 @@ export default function Home() {
           onChange={patch}
         />
       )}
-      <ExportDialog open={exportOpen} onOpenChange={setExportOpen} config={config} />
+      {exportOpen && <ExportDialog open onOpenChange={setExportOpen} config={config} library={library} initialTarget={exportTarget} />}
       <LibraryDialog
         open={libraryOpen}
         onOpenChange={setLibraryOpen}
@@ -208,6 +194,7 @@ export default function Home() {
         onAdd={addToLibrary}
         onRemove={(i) => commitLibrary(removeAt(libraryRef.current, i))}
         onClear={() => commitLibrary([])}
+        onExportPack={() => { setLibraryOpen(false); setExportTarget("pack"); setExportOpen(true); }}
       />
     </main>
   );

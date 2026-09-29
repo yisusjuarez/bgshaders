@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Layers3, MonitorPlay } from "lucide-react";
+import { Layers3, MonitorPlay, SlidersHorizontal } from "lucide-react";
 import { MotionCards, TempoControls } from "@/components/motion-controls";
 import { useLanguage } from "@/components/language-provider";
 import { PaletteEditor } from "@/components/palette-editor";
+import { FineTuneControls } from "@/components/fine-tune-controls";
 import { ShaderCanvas } from "@/components/shader-canvas";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,7 +158,7 @@ export function LoopDesignerDialog({
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Layers3 className="size-5" /> {t("Loop Designer")}
+            <Layers3 className="size-5" /> {t("Edit loop")}
           </DialogTitle>
           <DialogDescription>
             {t("Edit the single loop currently playing, then preview it in projection and giant-display environments.")}
@@ -166,12 +167,13 @@ export function LoopDesignerDialog({
 
         <Tabs defaultValue="design">
           <TabsList className="w-full">
-            <TabsTrigger value="design"><Layers3 /> {t("Design current loop")}</TabsTrigger>
-            <TabsTrigger value="venue"><MonitorPlay /> {t("Venue preview")}</TabsTrigger>
+            <TabsTrigger value="design"><Layers3 /> {t("Design")}</TabsTrigger>
+            <TabsTrigger value="fine"><SlidersHorizontal /> {t("Fine tune")}</TabsTrigger>
+            <TabsTrigger value="venue"><MonitorPlay /> {t("Preview")}</TabsTrigger>
           </TabsList>
           <TabsContent value="design" className="space-y-5 pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
-              {t("You are editing the current loop visible behind this dialog. Changes apply immediately. Use")} <strong className="text-white">+</strong> {t("in the dock when you want to add this version to the Pack Tray.")}
+              {t("Changes apply immediately to the current loop. Open Pack to add this version to the tray.")}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -240,6 +242,10 @@ export function LoopDesignerDialog({
               <Label>{t("Palette")}</Label>
               <PaletteEditor colors={config.colors} onChange={(next) => onChange({ colors: next })} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="fine" className="pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
+            <FineTuneControls config={config} onChange={onChange} />
           </TabsContent>
 
           <TabsContent value="venue" className="pt-2">

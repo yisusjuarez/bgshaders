@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  Boxes,
   Dices,
   Download,
   Library,
-  Plus,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -19,33 +17,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ShaderConfig } from "@/lib/shader/schema";
-import { cn } from "@/lib/utils";
 
 interface Props {
   config: ShaderConfig;
   playing: boolean;
   phaseRef: React.MutableRefObject<number>;
-  panelOpen: boolean;
   libraryCount: number;
   onTogglePlay: () => void;
   onRandomize: () => void;
   onAi: () => void;
   onCreative: () => void;
-  onTogglePanel: () => void;
   onExport: () => void;
-  onAddToLibrary: () => void;
   onOpenLibrary: () => void;
 }
 
 function DockButton({
   label,
   onClick,
-  active,
+  mobileText,
   children,
 }: {
   label: string;
   onClick: () => void;
-  active?: boolean;
+  mobileText?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -56,16 +50,12 @@ function DockButton({
             type="button"
             onClick={onClick}
             aria-label={label}
-            aria-pressed={active}
-            className={cn(
-              "grid size-11 place-items-center rounded-xl text-white/75 transition-colors outline-none sm:size-10",
-              "hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60",
-              active && "bg-white/15 text-white",
-            )}
+            className="flex h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-xl px-2 text-white/75 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60 sm:grid sm:size-10 sm:p-0"
           />
         }
-      >
+        >
         {children}
+        {mobileText && <span className="text-[9px] font-medium uppercase tracking-wide sm:hidden">{mobileText}</span>}
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
@@ -76,15 +66,12 @@ export function ControlDock({
   config,
   playing,
   phaseRef,
-  panelOpen,
   libraryCount,
   onTogglePlay,
   onRandomize,
   onAi,
   onCreative,
-  onTogglePanel,
   onExport,
-  onAddToLibrary,
   onOpenLibrary,
 }: Props) {
   const { t } = useLanguage();
@@ -113,24 +100,18 @@ export function ControlDock({
             <Sparkles className="size-4.5" />
           </DockButton>
         )}
-        <DockButton label={t("Loop Designer & Venue Preview (C)")} onClick={onCreative}>
-          <Boxes className="size-4.5" />
-        </DockButton>
         <DockButton
-          label={t("Parameters (P)")}
-          onClick={onTogglePanel}
-          active={panelOpen}
+          label={t("Edit loop (C)")}
+          mobileText={t("Edit")}
+          onClick={onCreative}
         >
           <SlidersHorizontal className="size-4.5" />
         </DockButton>
         </div>
         <div className="flex w-full items-center justify-around gap-1 border-t border-white/10 pt-1.5 sm:w-auto sm:justify-start sm:gap-2 sm:border-0 sm:pt-0">
         <div className="hidden h-8 w-px bg-white/10 sm:block" />
-        <DockButton label={t("Add current loop to pack tray")} onClick={onAddToLibrary}>
-          <Plus className="size-4.5" />
-        </DockButton>
         <div className="relative">
-          <DockButton label={t("Pack Builder & Tray (L)")} onClick={onOpenLibrary}>
+          <DockButton label={t("Pack (L)")} mobileText={t("Pack")} onClick={onOpenLibrary}>
             <Library className="size-4.5" />
           </DockButton>
           {libraryCount > 0 && (

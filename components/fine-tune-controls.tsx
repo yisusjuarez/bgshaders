@@ -1,18 +1,9 @@
 "use client";
 
-import { PaletteEditor } from "@/components/palette-editor";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { familyItems } from "@/lib/shader/labels";
-import { type Family, type ShaderConfig } from "@/lib/shader/schema";
+import { type ShaderConfig } from "@/lib/shader/schema";
 
 interface Props {
   config: ShaderConfig;
@@ -61,47 +52,10 @@ function Row({
   );
 }
 
-export function ParamsPanel({ config, onChange }: Props) {
+export function FineTuneControls({ config, onChange }: Props) {
   const { t } = useLanguage();
   return (
-    <aside
-      className="fixed right-3 bottom-[calc(10.5rem+env(safe-area-inset-bottom))] left-3 z-20 max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-zinc-950/85 p-4 text-white shadow-2xl backdrop-blur-xl sm:top-1/2 sm:right-4 sm:bottom-auto sm:left-auto sm:max-h-[85vh] sm:w-72 sm:-translate-y-1/2 sm:bg-zinc-950/55 sm:p-5"
-      aria-label={t("Loop parameters")}
-    >
-      <div className="space-y-5">
-        <div className="space-y-1.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
-            {t("Family")}
-          </span>
-          <Select
-            items={familyItems.map((item) => ({ ...item, label: t(item.label) }))}
-            value={config.family}
-            onValueChange={(v) => v && onChange({ family: v as Family })}
-          >
-            <SelectTrigger className="w-full border-white/15 text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {familyItems.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  {t(f.label)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
-            {t("Palette")}
-          </span>
-          <PaletteEditor
-            colors={config.colors}
-            onChange={(colors) => onChange({ colors })}
-            compact
-          />
-        </div>
-
+    <div className="grid gap-5 sm:grid-cols-2" role="group" aria-label={t("Loop parameters")}>
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
@@ -131,15 +85,6 @@ export function ParamsPanel({ config, onChange }: Props) {
           step={1}
           format={(v) => `${v}×`}
           onChange={(v) => onChange({ speed: Math.round(v) })}
-        />
-        <Row
-          label={t("Duration")}
-          value={config.duration}
-          min={2}
-          max={30}
-          step={1}
-          format={(v) => `${v}s`}
-          onChange={(v) => onChange({ duration: v })}
         />
         <Row
           label={t("Pattern size")}
@@ -196,7 +141,6 @@ export function ParamsPanel({ config, onChange }: Props) {
           format={(v) => v.toFixed(2)}
           onChange={(v) => onChange({ vignette: v })}
         />
-      </div>
-    </aside>
+    </div>
   );
 }

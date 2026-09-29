@@ -25,30 +25,24 @@ npm run dev
 
 Open http://localhost:3000.
 
-- **Space** play/pause · **R** random design · **C** Loop Designer · **L** Pack Builder · **P** parameters
+- **Space** play/pause · **R** random design · **C** edit loop · **L** pack
 - `?seed=N` in the URL reproduces a specific random design.
 - Use the **ES / EN** switch in the top bar to change the interface language.
   The choice is saved in the browser; first-time visitors use their browser language.
 
-## Loop Designer and Pack Builder
+## Main workflow
 
-- **Loop Designer** edits only the current loop: it blends two shader families with
-  mix, screen, multiply or difference and controls its palette, movement and timing.
+- **Edit** contains the current loop's design, fine controls and venue preview.
+  Changes appear immediately behind the dialog.
 - **Beat sync** converts BPM and beat count into a mathematically exact loop length.
-- **Venue Preview** shows the current loop on a projection screen, concert LED
-  wall, and projection-mapped immersive room.
 - Palettes can use a preset or 2–6 individually editable custom colors.
-- **Pack Builder & Batch Export** owns every multi-loop workflow: Directed Pack
-  creates a coherent sale-ready collection, Matrix Batch creates all chosen
-  combinations, and Random Batch explores the design space.
-- Every multi-loop method adds to the same **Tray**. The ZIP export always renders
-  exactly the loops currently in that Tray.
+- **Pack** adds the current loop or creates a group of loops. Guided creation is
+  the default; random and matrix methods remain in the creation menu.
+- **Export** saves the current video or all loops in the Tray as one ZIP.
 - Pack ZIPs default to a searchable structure: `catalog.html` provides visual
   previews and combined filters for type, color, speed and motion; `index.csv`
-  works in spreadsheets and asset managers; filenames and JSON sidecars retain
-  the same searchable tags. Legacy single-axis folders remain optional.
-- Export finishing can override sharpness, grain and vignette for one video or
-  normalize the entire pack. High/Master encoding preserves fine detail.
+  works in spreadsheets and asset managers. Organization and pack finishing
+  remain available under **Pack options** in Export. High/Master encoding preserves fine detail.
 
 AI generation is temporarily disabled. The dock button, `G` shortcut, and API
 are available again when `NEXT_PUBLIC_AI_ENABLED=true` is set and the app is rebuilt.
