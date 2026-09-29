@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export function ExportDialog({ open, onOpenChange, config }: Props) {
+  const { t } = useLanguage();
   const [resolution, setResolution] = useState("1920x1080");
   const [fps, setFps] = useState("30");
   const [quality, setQuality] = useState<"balanced" | "high" | "master">("high");
@@ -80,14 +82,14 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
         abort.signal,
       );
       downloadBlob(result);
-      toast.success(`Saved ${result.filename}`);
+      toast.success(`${t("Saved")} ${result.filename}`);
       onOpenChange(false);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
-        toast("Export cancelled");
+        toast(t("Export cancelled"));
       } else {
         console.error(e);
-        toast.error(e instanceof Error ? e.message : "Export failed");
+        toast.error(e instanceof Error ? t(e.message) : t("Export failed"));
       }
     } finally {
       setProgress(null);
@@ -107,18 +109,16 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Export loop video</DialogTitle>
+          <DialogTitle>{t("Export loop video")}</DialogTitle>
           <DialogDescription>
-            Rendered frame by frame — exactly {frames} frames over{" "}
-            {config.duration}s, so the last frame hands off to the first with no
-            seam.
+            {t("Rendered frame by frame — exactly")} {frames} {t("frames over")} {config.duration}s. {t("The last frame joins the first seamlessly.")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label>Resolution</Label>
+            <Label>{t("Resolution")}</Label>
             <Select
-              items={RESOLUTIONS}
+              items={RESOLUTIONS.map((item) => ({ ...item, label: t(item.label) }))}
               value={resolution}
               onValueChange={(v) => v && setResolution(v)}
               disabled={busy}
@@ -129,7 +129,7 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
               <SelectContent>
                 {RESOLUTIONS.map((r) => (
                   <SelectItem key={r.value} value={r.value}>
-                    {r.label}
+                    {t(r.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -138,8 +138,8 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
           <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <Label>Output finishing</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">Overrides only this exported file; the current loop stays unchanged.</p>
+                <Label>{t("Output finishing")}</Label>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{t("Overrides only this exported file; the current loop stays unchanged.")}</p>
               </div>
               {customFinish && (
                 <Button
@@ -148,27 +148,27 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
                   disabled={busy}
                   onClick={() => { setSharpness(null); setGrain(null); setVignette(null); }}
                 >
-                  Use design values
+                  {t("Use design values")}
                 </Button>
               )}
             </div>
             <ExportSlider
-              label="Sharpness"
+              label={t("Sharpness")}
               value={exportConfig.sharpness}
               min={-1}
               max={1}
               step={0.05}
-              display={exportConfig.sharpness < -0.05 ? `Soft ${Math.round(-exportConfig.sharpness * 100)}%` : exportConfig.sharpness > 0.05 ? `Crisp ${Math.round(exportConfig.sharpness * 100)}%` : "Neutral"}
+              display={exportConfig.sharpness < -0.05 ? `${t("Soft")} ${Math.round(-exportConfig.sharpness * 100)}%` : exportConfig.sharpness > 0.05 ? `${t("Crisp")} ${Math.round(exportConfig.sharpness * 100)}%` : t("Neutral")}
               disabled={busy}
               onChange={setSharpness}
             />
-            <ExportSlider label="Grain" value={exportConfig.grain} min={0} max={0.2} step={0.005} display={exportConfig.grain.toFixed(3)} disabled={busy} onChange={setGrain} />
-            <ExportSlider label="Vignette" value={exportConfig.vignette} min={0} max={1} step={0.01} display={`${Math.round(exportConfig.vignette * 100)}%`} disabled={busy} onChange={setVignette} />
+            <ExportSlider label={t("Grain")} value={exportConfig.grain} min={0} max={0.2} step={0.005} display={exportConfig.grain.toFixed(3)} disabled={busy} onChange={setGrain} />
+            <ExportSlider label={t("Vignette")} value={exportConfig.vignette} min={0} max={1} step={0.01} display={`${Math.round(exportConfig.vignette * 100)}%`} disabled={busy} onChange={setVignette} />
           </div>
           <div className="space-y-2">
-            <Label>Frame rate</Label>
+            <Label>{t("Frame rate")}</Label>
             <Select
-              items={FPS_OPTIONS}
+              items={FPS_OPTIONS.map((item) => ({ ...item, label: t(item.label) }))}
               value={fps}
               onValueChange={(v) => v && setFps(v)}
               disabled={busy}
@@ -179,24 +179,24 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
               <SelectContent>
                 {FPS_OPTIONS.map((f) => (
                   <SelectItem key={f.value} value={f.value}>
-                    {f.label}
+                    {t(f.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Encoding quality</Label>
+            <Label>{t("Encoding quality")}</Label>
             <Select
-              items={QUALITY_OPTIONS.map((option) => ({ ...option }))}
+              items={QUALITY_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
               value={quality}
               onValueChange={(value) => value && setQuality(value as typeof quality)}
               disabled={busy}
             >
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {QUALITY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  {QUALITY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{t(option.label)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -204,13 +204,13 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
           <p className="font-mono text-[11px] text-muted-foreground">
             {mp4
               ? `MP4 · H.264 · ${width}×${height} @ ${fps} fps · ${quality}`
-              : `WebM (this browser has no WebCodecs; realtime capture) · ${width}×${height} · ${quality}`}
+              : `WebM (${t("this browser has no WebCodecs; realtime capture")}) · ${width}×${height} · ${t(quality)}`}
           </p>
           {busy && (
             <div className="space-y-1.5">
               <Progress value={progress} />
               <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                Rendering… {progress}%
+                {t("Rendering…")} {progress}%
               </p>
             </div>
           )}
@@ -218,16 +218,16 @@ export function ExportDialog({ open, onOpenChange, config }: Props) {
         <DialogFooter>
           {busy ? (
             <Button variant="ghost" onClick={() => abortRef.current?.abort()}>
-              Cancel export
+              {t("Cancel export")}
             </Button>
           ) : (
             <>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                Close
+                {t("Close")}
               </Button>
               <Button onClick={start}>
                 <Download className="size-4" />
-                Export video
+                {t("Export video")}
               </Button>
             </>
           )}
@@ -268,7 +268,7 @@ function ExportSlider({
         max={max}
         step={step}
         disabled={disabled}
-        aria-label={`Export ${label}`}
+        aria-label={label}
         onValueChange={(next) => onChange(Array.isArray(next) ? next[0] : next)}
       />
     </div>

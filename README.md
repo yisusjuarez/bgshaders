@@ -25,8 +25,10 @@ npm run dev
 
 Open http://localhost:3000.
 
-- **Space** play/pause · **R** random design · **G** AI generate · **C** Loop Designer · **L** Pack Builder · **P** parameters
+- **Space** play/pause · **R** random design · **C** Loop Designer · **L** Pack Builder · **P** parameters
 - `?seed=N` in the URL reproduces a specific random design.
+- Use the **ES / EN** switch in the top bar to change the interface language.
+  The choice is saved in the browser; first-time visitors use their browser language.
 
 ## Loop Designer and Pack Builder
 
@@ -48,7 +50,8 @@ Open http://localhost:3000.
 - Export finishing can override sharpness, grain and vignette for one video or
   normalize the entire pack. High/Master encoding preserves fine detail.
 
-OpenRouter key and model selection live inside the **Generate with AI** dialog.
+AI generation is temporarily disabled. The dock button, `G` shortcut, and API
+are available again when `NEXT_PUBLIC_AI_ENABLED=true` is set and the app is rebuilt.
 
 ## AI generator (OpenRouter)
 

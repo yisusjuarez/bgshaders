@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { AI_ENABLED } from "@/lib/features";
 import {
   BLEND_MODES,
   FAMILIES,
@@ -120,6 +121,13 @@ function repair(raw: Record<string, unknown>): ShaderConfig | null {
 }
 
 export async function POST(req: NextRequest) {
+  if (!AI_ENABLED) {
+    return NextResponse.json(
+      { error: "AI generation is temporarily unavailable." },
+      { status: 503 },
+    );
+  }
+
   const body = requestSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

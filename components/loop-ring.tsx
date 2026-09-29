@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Pause, Play } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 
 const R = 24;
 const CIRC = 2 * Math.PI * R;
@@ -19,6 +20,7 @@ interface Props {
  * product's promise, drawn as UI. Stroke colors come from the live palette.
  */
 export function LoopRing({ colors, playing, phaseRef, onToggle }: Props) {
+  const { t } = useLanguage();
   const arcRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function LoopRing({ colors, playing, phaseRef, onToggle }: Props) {
     <button
       type="button"
       onClick={onToggle}
-      aria-label={playing ? "Pause loop" : "Play loop"}
+      aria-label={t(playing ? "Pause loop" : "Play loop")}
       className="group relative grid size-14 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     >
       <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">

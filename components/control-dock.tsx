@@ -10,6 +10,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { LoopRing } from "@/components/loop-ring";
+import { useLanguage } from "@/components/language-provider";
+import { AI_ENABLED } from "@/lib/features";
 import {
   Tooltip,
   TooltipContent,
@@ -85,6 +87,7 @@ export function ControlDock({
   onAddToLibrary,
   onOpenLibrary,
 }: Props) {
+  const { t } = useLanguage();
   return (
     <div className="fixed right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-20 sm:right-auto sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2">
       <TooltipProvider delay={250}>
@@ -99,20 +102,22 @@ export function ControlDock({
               onToggle={onTogglePlay}
             />
           </TooltipTrigger>
-          <TooltipContent>{playing ? "Pause loop (Space)" : "Play loop (Space)"}</TooltipContent>
+          <TooltipContent>{t(playing ? "Pause loop (Space)" : "Play loop (Space)")}</TooltipContent>
         </Tooltip>
         <div className="hidden h-8 w-px bg-white/10 sm:block" />
-        <DockButton label="Random loop (R)" onClick={onRandomize}>
+        <DockButton label={t("Random loop (R)")} onClick={onRandomize}>
           <Dices className="size-4.5" />
         </DockButton>
-        <DockButton label="Generate with AI (G)" onClick={onAi}>
-          <Sparkles className="size-4.5" />
-        </DockButton>
-        <DockButton label="Loop Designer & Venue Preview (C)" onClick={onCreative}>
+        {AI_ENABLED && (
+          <DockButton label={t("Generate with AI (G)")} onClick={onAi}>
+            <Sparkles className="size-4.5" />
+          </DockButton>
+        )}
+        <DockButton label={t("Loop Designer & Venue Preview (C)")} onClick={onCreative}>
           <Boxes className="size-4.5" />
         </DockButton>
         <DockButton
-          label="Parameters (P)"
+          label={t("Parameters (P)")}
           onClick={onTogglePanel}
           active={panelOpen}
         >
@@ -121,11 +126,11 @@ export function ControlDock({
         </div>
         <div className="flex w-full items-center justify-around gap-1 border-t border-white/10 pt-1.5 sm:w-auto sm:justify-start sm:gap-2 sm:border-0 sm:pt-0">
         <div className="hidden h-8 w-px bg-white/10 sm:block" />
-        <DockButton label="Add current loop to pack tray" onClick={onAddToLibrary}>
+        <DockButton label={t("Add current loop to pack tray")} onClick={onAddToLibrary}>
           <Plus className="size-4.5" />
         </DockButton>
         <div className="relative">
-          <DockButton label="Pack Builder & Tray (L)" onClick={onOpenLibrary}>
+          <DockButton label={t("Pack Builder & Tray (L)")} onClick={onOpenLibrary}>
             <Library className="size-4.5" />
           </DockButton>
           {libraryCount > 0 && (
@@ -146,9 +151,9 @@ export function ControlDock({
             }
           >
             <Download className="size-4" />
-            Export
+            {t("Export")}
           </TooltipTrigger>
-          <TooltipContent>Export current loop as video</TooltipContent>
+          <TooltipContent>{t("Export current loop as video")}</TooltipContent>
         </Tooltip>
         </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Settings2, Sparkles } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ const IDEAS = [
 ];
 
 export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
+  const { t } = useLanguage();
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("create");
@@ -65,7 +67,7 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
     setApiKey(key.trim());
     setModel(model);
     setKey(getApiKey());
-    toast.success("AI configuration saved");
+    toast.success(t("AI configuration saved"));
     setTab("create");
   };
 
@@ -85,18 +87,18 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) {
-          toast.error(data.error ?? "Add an API key in AI configuration");
+          toast.error(t(data.error ?? "Add an API key in AI configuration"));
           setTab("settings");
         } else {
-          toast.error(data.error ?? "Generation failed");
+          toast.error(t(data.error ?? "Generation failed"));
         }
         return;
       }
       onGenerated(data.config as ShaderConfig);
-      toast.success(`“${data.config.name}” is playing`);
+      toast.success(`“${data.config.name}” ${t("is playing")}`);
       handleOpenChange(false);
     } catch {
-      toast.error("Network error while generating");
+      toast.error(t("Network error while generating"));
     } finally {
       setBusy(false);
     }
@@ -106,21 +108,20 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Generate with AI</DialogTitle>
+          <DialogTitle>{t("Generate with AI")}</DialogTitle>
           <DialogDescription>
-            Describe a mood, a scene, or a use case — the model designs a
-            palette and motion for it. Every result loops perfectly.
+            {t("Describe a mood, a scene, or a use case — the model designs a palette and motion for it. Every result loops perfectly.")}
           </DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full">
-            <TabsTrigger value="create"><Sparkles /> Create</TabsTrigger>
-            <TabsTrigger value="settings"><Settings2 /> AI configuration</TabsTrigger>
+            <TabsTrigger value="create"><Sparkles /> {t("Create")}</TabsTrigger>
+            <TabsTrigger value="settings"><Settings2 /> {t("AI configuration")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="create" className="space-y-4 pt-2">
             <Textarea
-              placeholder="e.g. immersive blue light for a large projection wall"
+              placeholder={t("e.g. immersive blue light for a large projection wall")}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
@@ -134,27 +135,27 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
                 <button
                   key={idea}
                   type="button"
-                  onClick={() => setPrompt(idea)}
+                  onClick={() => setPrompt(t(idea))}
                   className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
-                  {idea}
+                  {t(idea)}
                 </button>
               ))}
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={busy}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button onClick={generate} disabled={busy || !prompt.trim()}>
                 <Sparkles className="size-4" />
-                {busy ? "Generating…" : "Generate loop"}
+                {t(busy ? "Generating…" : "Generate loop")}
               </Button>
             </DialogFooter>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="or-key">OpenRouter API key</Label>
+              <Label htmlFor="or-key">{t("OpenRouter API key")}</Label>
               <Input
                 id="or-key"
                 type="password"
@@ -164,11 +165,11 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Stored only in this browser. Leave empty to use the server key when configured.
+                {t("Stored only in this browser. Leave empty to use the server key when configured.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Model</Label>
+              <Label>{t("Model")}</Label>
               <Select items={AI_MODELS} value={model} onValueChange={(value) => value && setModelState(value)}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -179,8 +180,8 @@ export function AiDialog({ open, onOpenChange, onGenerated }: Props) {
               </Select>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setTab("create")}>Back</Button>
-              <Button onClick={saveSettings}>Save configuration</Button>
+              <Button variant="ghost" onClick={() => setTab("create")}>{t("Back")}</Button>
+              <Button onClick={saveSettings}>{t("Save configuration")}</Button>
             </DialogFooter>
           </TabsContent>
         </Tabs>

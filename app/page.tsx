@@ -7,8 +7,10 @@ import { ControlDock } from "@/components/control-dock";
 import { LoopDesignerDialog } from "@/components/creative-studio-dialog";
 import { ExportDialog } from "@/components/export-dialog";
 import { LibraryDialog } from "@/components/library-dialog";
+import { useLanguage } from "@/components/language-provider";
 import { ParamsPanel } from "@/components/params-panel";
 import { ShaderCanvas } from "@/components/shader-canvas";
+import { AI_ENABLED } from "@/lib/features";
 import {
   addConfigs,
   getLibrary,
@@ -16,6 +18,8 @@ import {
   setLibrary,
 } from "@/lib/library/store";
 import { randomConfig } from "@/lib/shader/random";
+import { FAMILY_LABELS } from "@/lib/shader/labels";
+import { MOTION_PROFILES } from "@/lib/creative/pack";
 import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
 
 // Hydration-safe placeholder. The URL/bootstrap effect replaces it with a
@@ -23,6 +27,7 @@ import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
 const INITIAL_SEED = 421;
 
 export default function Home() {
+  const { language, setLanguage, t } = useLanguage();
   const [config, setConfig] = useState<ShaderConfig>(() =>
     randomConfig(INITIAL_SEED),
   );
@@ -59,8 +64,8 @@ export default function Home() {
   );
   const addCurrent = useCallback(() => {
     const added = addToLibrary([config]);
-    toast(added ? "Added to pack tray" : "Already in pack tray");
-  }, [addToLibrary, config]);
+    toast(t(added ? "Added to pack tray" : "Already in pack tray"));
+  }, [addToLibrary, config, t]);
 
   // Hydrate the tray from localStorage post-mount (SSR-safe).
   useEffect(() => {
@@ -114,7 +119,7 @@ export default function Home() {
         setPlaying((p) => !p);
       } else if (e.key === "r" || e.key === "R") {
         randomize();
-      } else if (e.key === "g" || e.key === "G") {
+      } else if (AI_ENABLED && (e.key === "g" || e.key === "G")) {
         setAiOpen(true);
       } else if (e.key === "p" || e.key === "P") {
         setPanelOpen((o) => !o);
@@ -133,21 +138,30 @@ export default function Home() {
       <ShaderCanvas config={config} playing={playing} phaseRef={phaseRef} />
 
       {/* wordmark + current design */}
-      <header className="pointer-events-none fixed top-[max(1rem,env(safe-area-inset-top))] right-4 left-4 z-20 flex flex-col gap-2 sm:top-5 sm:right-auto sm:left-5">
-        <div className="flex items-baseline gap-2 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
+      <header className="pointer-events-none fixed top-[max(1rem,env(safe-area-inset-top))] right-4 left-4 z-20 flex flex-col gap-2 sm:top-5 sm:right-5 sm:left-5">
+        <div className="flex items-center justify-between gap-3 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
+          <div className="flex items-baseline gap-2">
           <h1 className="font-mono text-sm font-semibold tracking-[0.28em] lowercase">
             jedylabs
           </h1>
           <span className="font-mono text-[10px] tracking-[0.2em] text-white/60 uppercase">
-            loop studio
+            {t("loop studio")}
           </span>
+          </div>
+          <div className="pointer-events-auto flex shrink-0 rounded-full border border-white/15 bg-zinc-950/60 p-0.5 font-mono text-[10px] backdrop-blur-xl" role="group" aria-label={language === "es" ? "Idioma" : "Language"}>
+            {(["es", "en"] as const).map((option) => (
+              <button key={option} type="button" onClick={() => setLanguage(option)} aria-pressed={language === option} aria-label={option === "es" ? "Español" : "English"} className={`rounded-full px-2.5 py-1 transition-colors ${language === option ? "bg-white text-zinc-950" : "text-white/65 hover:text-white"}`}>
+                {option.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="pointer-events-auto flex min-w-0 w-fit max-w-full flex-col gap-0.5 rounded-2xl border border-white/10 bg-zinc-950/60 px-3 py-2 backdrop-blur-xl sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:py-1.5">
           <span className="truncate text-[13px] font-medium text-white">{config.name}</span>
           <span className="block max-w-full truncate font-mono text-[10px] tracking-[0.1em] text-white/55 uppercase sm:tracking-[0.14em]">
-            {config.family}
-            {config.secondaryFamily ? ` + ${config.secondaryFamily}` : ""} ·{" "}
-            {config.motionDNA} · {config.bpm} bpm · seed {config.seed}
+            {t(FAMILY_LABELS[config.family])}
+            {config.secondaryFamily ? ` + ${t(FAMILY_LABELS[config.secondaryFamily])}` : ""} ·{" "}
+            {t(MOTION_PROFILES[config.motionDNA].label)} · {config.bpm} bpm · {t("Seed")} {config.seed}
           </span>
         </div>
       </header>
@@ -170,11 +184,13 @@ export default function Home() {
         onOpenLibrary={() => setLibraryOpen(true)}
       />
 
-      <AiDialog
-        open={aiOpen}
-        onOpenChange={setAiOpen}
-        onGenerated={(c) => setConfig(c)}
-      />
+      {AI_ENABLED && (
+        <AiDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          onGenerated={(c) => setConfig(c)}
+        />
+      )}
       {creativeOpen && (
         <LoopDesignerDialog
           open

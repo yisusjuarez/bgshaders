@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/components/language-provider";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,6 +21,7 @@ export function MotionCards({
   value: MotionDNA;
   onChange: (value: MotionDNA) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {MOTION_DNAS.map((dna) => {
@@ -36,9 +38,9 @@ export function MotionCards({
                 : "border-white/10 bg-white/[0.03] text-white/65 hover:bg-white/[0.07]",
             )}
           >
-            <span className="block text-[13px] font-medium">{profile.label}</span>
+            <span className="block text-[13px] font-medium">{t(profile.label)}</span>
             <span className="mt-1 block text-[10px] leading-4 text-white/45">
-              {profile.description}
+              {t(profile.description)}
             </span>
           </button>
         );
@@ -56,6 +58,7 @@ export function TempoControls({
   beats: number;
   onChange: (bpm: number, beats: number) => void;
 }) {
+  const { t } = useLanguage();
   const beatOptions = [4, 8, 16, 32, 64];
   const validBeats = (nextBpm: number) =>
     beatOptions.filter((value) => {
@@ -86,7 +89,7 @@ export function TempoControls({
         />
       </div>
       <div className="space-y-1.5">
-        <Label>Beats per loop</Label>
+        <Label>{t("Beats per loop")}</Label>
         <Select
           items={validBeats(bpm).map((value) => ({
             value: String(value),

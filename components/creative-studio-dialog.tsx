@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Layers3, MonitorPlay } from "lucide-react";
 import { MotionCards, TempoControls } from "@/components/motion-controls";
+import { useLanguage } from "@/components/language-provider";
 import { PaletteEditor } from "@/components/palette-editor";
 import { ShaderCanvas } from "@/components/shader-canvas";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ interface Props {
 }
 
 function MockupPreview({ config }: { config: ShaderConfig }) {
+  const { t } = useLanguage();
   const phaseRef = useRef(0);
   const [mockup, setMockup] = useState<"projection" | "led" | "immersive">("projection");
   const mockups = [
@@ -62,7 +64,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
             size="sm"
             onClick={() => setMockup(item.value)}
           >
-            {item.label}
+            {t(item.label)}
           </Button>
         ))}
       </div>
@@ -83,7 +85,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
               ))}
             </div>
             <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              16:9 projector · dark venue
+              {t("16:9 projector · dark venue")}
             </div>
           </div>
         )}
@@ -104,7 +106,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
               ))}
             </div>
             <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              Wide LED wall · live stage
+              {t("Wide LED wall · live stage")}
             </div>
           </div>
         )}
@@ -119,7 +121,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
             <div className="pointer-events-none absolute inset-7 [clip-path:polygon(100%_0,86%_8%,86%_88%,100%_100%)] bg-black/35 ring-1 ring-white/20" />
             <div className="pointer-events-none absolute right-7 bottom-7 left-7 h-[28%] origin-bottom bg-gradient-to-b from-white/5 to-black/70 [clip-path:polygon(14%_0,86%_0,100%_100%,0_100%)]" />
             <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              Projection-mapped room · 3 surfaces
+              {t("Projection-mapped room · 3 surfaces")}
             </div>
             <div className="absolute bottom-8 left-1/2 h-14 w-5 -translate-x-1/2 rounded-t-full bg-black shadow-[0_0_20px_#000]">
               <i className="absolute -top-3 left-1/2 size-5 -translate-x-1/2 rounded-full bg-black" />
@@ -128,7 +130,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
         )}
       </div>
       <p className="text-[12px] text-muted-foreground">
-        Live scale preview for projection and giant-display use. This is a spatial mockup, not a color-calibration tool.
+        {t("Live scale preview for projection and giant-display use. This is a spatial mockup, not a color-calibration tool.")}
       </p>
     </div>
   );
@@ -140,6 +142,8 @@ export function LoopDesignerDialog({
   config,
   onChange,
 }: Props) {
+  const { t } = useLanguage();
+  const localizedFamilies = familyItems.map((item) => ({ ...item, label: t(item.label) }));
   const syncCurrentTempo = (nextBpm: number, nextBeats: number) => {
     onChange({
       bpm: nextBpm,
@@ -153,41 +157,41 @@ export function LoopDesignerDialog({
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Layers3 className="size-5" /> Loop Designer
+            <Layers3 className="size-5" /> {t("Loop Designer")}
           </DialogTitle>
           <DialogDescription>
-            Edit the single loop currently playing, then preview it in projection and giant-display environments.
+            {t("Edit the single loop currently playing, then preview it in projection and giant-display environments.")}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="design">
           <TabsList className="w-full">
-            <TabsTrigger value="design"><Layers3 /> Design current loop</TabsTrigger>
-            <TabsTrigger value="venue"><MonitorPlay /> Venue preview</TabsTrigger>
+            <TabsTrigger value="design"><Layers3 /> {t("Design current loop")}</TabsTrigger>
+            <TabsTrigger value="venue"><MonitorPlay /> {t("Venue preview")}</TabsTrigger>
           </TabsList>
           <TabsContent value="design" className="space-y-5 pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
-              You are editing the current loop visible behind this dialog. Changes apply immediately. Use <strong className="text-white">+</strong> in the dock when you want to add this version to the Pack Tray.
+              {t("You are editing the current loop visible behind this dialog. Changes apply immediately. Use")} <strong className="text-white">+</strong> {t("in the dock when you want to add this version to the Pack Tray.")}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Primary layer</Label>
-                <Select items={familyItems} value={config.family} onValueChange={(v) => v && onChange({ family: v as Family })}>
+                <Label>{t("Primary layer")}</Label>
+                <Select items={localizedFamilies} value={config.family} onValueChange={(v) => v && onChange({ family: v as Family })}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{familyItems.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
+                  <SelectContent>{localizedFamilies.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Secondary layer</Label>
+                <Label>{t("Secondary layer")}</Label>
                 <Select
-                  items={[{ value: "none", label: "None" }, ...familyItems]}
+                  items={[{ value: "none", label: t("None") }, ...localizedFamilies]}
                   value={config.secondaryFamily ?? "none"}
                   onValueChange={(v) => onChange({ secondaryFamily: v === "none" ? null : v as Family })}
                 >
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {familyItems.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                    <SelectItem value="none">{t("None")}</SelectItem>
+                    {localizedFamilies.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -195,19 +199,19 @@ export function LoopDesignerDialog({
 
             <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
               <div className="space-y-1.5">
-                <Label>Blend mode</Label>
+                <Label>{t("Blend mode")}</Label>
                 <Select
-                  items={BLEND_MODES.map((mode) => ({ value: mode, label: BLEND_LABELS[mode] }))}
+                  items={BLEND_MODES.map((mode) => ({ value: mode, label: t(BLEND_LABELS[mode]) }))}
                   value={config.blendMode}
                   onValueChange={(v) => v && onChange({ blendMode: v as BlendMode })}
                   disabled={!config.secondaryFamily}
                 >
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{BLEND_MODES.map((mode) => <SelectItem key={mode} value={mode}>{BLEND_LABELS[mode]}</SelectItem>)}</SelectContent>
+                  <SelectContent>{BLEND_MODES.map((mode) => <SelectItem key={mode} value={mode}>{t(BLEND_LABELS[mode])}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between"><Label>Layer amount</Label><span className="font-mono text-[11px]">{Math.round(config.blendAmount * 100)}%</span></div>
+                <div className="flex justify-between"><Label>{t("Layer amount")}</Label><span className="font-mono text-[11px]">{Math.round(config.blendAmount * 100)}%</span></div>
                 <Slider
                   value={config.blendAmount}
                   min={0}
@@ -221,8 +225,8 @@ export function LoopDesignerDialog({
 
             <div className="space-y-2">
               <div>
-                <Label>Motion character</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">Apply a complete movement profile to the current loop.</p>
+                <Label>{t("Motion character")}</Label>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{t("Apply a complete movement profile to the current loop.")}</p>
               </div>
               <MotionCards
                 value={config.motionDNA}
@@ -233,7 +237,7 @@ export function LoopDesignerDialog({
             <TempoControls bpm={config.bpm} beats={config.beats} onChange={syncCurrentTempo} />
 
             <div className="space-y-2">
-              <Label>Palette</Label>
+              <Label>{t("Palette")}</Label>
               <PaletteEditor colors={config.colors} onChange={(next) => onChange({ colors: next })} />
             </div>
           </TabsContent>
