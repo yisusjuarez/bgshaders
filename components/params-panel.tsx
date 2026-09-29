@@ -63,7 +63,7 @@ function Row({
 export function ParamsPanel({ config, onChange }: Props) {
   return (
     <aside
-      className="fixed top-1/2 right-4 z-20 max-h-[85vh] w-72 max-w-[calc(100vw-2rem)] -translate-y-1/2 overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/55 p-5 text-white shadow-2xl backdrop-blur-xl"
+      className="fixed right-3 bottom-[calc(10.5rem+env(safe-area-inset-bottom))] left-3 z-20 max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-zinc-950/85 p-4 text-white shadow-2xl backdrop-blur-xl sm:top-1/2 sm:right-4 sm:bottom-auto sm:left-auto sm:max-h-[85vh] sm:w-72 sm:-translate-y-1/2 sm:bg-zinc-950/55 sm:p-5"
       aria-label="Loop parameters"
     >
       <div className="space-y-5">

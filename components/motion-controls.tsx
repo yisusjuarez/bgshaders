@@ -74,7 +74,7 @@ export function TempoControls({
   };
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-3">
+    <div className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
       <div className="space-y-1.5">
         <Label>BPM</Label>
         <Input
@@ -103,7 +103,7 @@ export function TempoControls({
           </SelectContent>
         </Select>
       </div>
-      <div className="pb-2 font-mono text-[11px] text-white/55">
+      <div className="col-span-2 font-mono text-[11px] text-white/55 sm:col-span-1 sm:pb-2">
         {durationFromTempo(bpm, beats).toFixed(2)}s
       </div>
     </div>

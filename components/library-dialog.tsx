@@ -279,11 +279,11 @@ export function LibraryDialog({
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger className="min-w-0" value="directed">Directed Pack</TabsTrigger>
-            <TabsTrigger className="min-w-0" value="matrix">Matrix Batch</TabsTrigger>
-            <TabsTrigger className="min-w-0" value="random">Random Batch</TabsTrigger>
-            <TabsTrigger className="min-w-0" value="tray">Tray ({library.length})</TabsTrigger>
+          <TabsList className="grid h-auto! w-full grid-cols-2 gap-1 sm:grid-cols-4">
+            <TabsTrigger className="min-w-0 min-h-9" value="directed">Directed Pack</TabsTrigger>
+            <TabsTrigger className="min-w-0 min-h-9" value="matrix">Matrix Batch</TabsTrigger>
+            <TabsTrigger className="min-w-0 min-h-9" value="random">Random Batch</TabsTrigger>
+            <TabsTrigger className="min-w-0 min-h-9" value="tray">Tray ({library.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="directed">
@@ -295,7 +295,7 @@ export function LibraryDialog({
           </TabsContent>
 
           {/* MATRIX */}
-          <TabsContent value="matrix" className="max-h-[52vh] space-y-4 overflow-y-auto pr-1 pt-2">
+          <TabsContent value="matrix" className="space-y-4 pt-2 sm:max-h-[52vh] sm:overflow-y-auto sm:pr-1">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
               <strong className="text-white">Matrix Batch</strong> creates every selected style × speed × palette combination. Use it for systematic catalogs and coverage, not for a tightly art-directed collection.
             </div>
@@ -390,7 +390,7 @@ export function LibraryDialog({
           </TabsContent>
 
           {/* RANDOM */}
-          <TabsContent value="random" className="max-h-[52vh] space-y-4 overflow-y-auto pr-1 pt-2">
+          <TabsContent value="random" className="space-y-4 pt-2 sm:max-h-[52vh] sm:overflow-y-auto sm:pr-1">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
               <strong className="text-white">Random Batch</strong> is for discovery: it samples freely from the entire design space instead of following one direction or a fixed grid. A base seed makes the draw reproducible.
             </div>
@@ -442,7 +442,7 @@ export function LibraryDialog({
           </TabsContent>
 
           {/* TRAY */}
-          <TabsContent value="tray" className="max-h-[52vh] space-y-2 overflow-y-auto pr-1 pt-2">
+          <TabsContent value="tray" className="space-y-2 pt-2 sm:max-h-[52vh] sm:overflow-y-auto sm:pr-1">
             {library.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 The tray is empty. Create a Directed Pack, generate a Matrix or Random
@@ -490,7 +490,7 @@ export function LibraryDialog({
             <div className="text-[13px] font-medium text-white">Export the Tray</div>
             <p className="text-[11px] text-muted-foreground">These settings apply to every loop currently in the Tray, regardless of how it was created.</p>
           </div>
-          <div className="grid grid-cols-[1.1fr_.55fr_1fr_1.35fr] gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1.1fr_.55fr_1fr_1.35fr]">
             <div className="min-w-0 space-y-1.5">
               <Label>Resolution</Label>
               <Select items={RESOLUTIONS} value={resolution} onValueChange={(v) => v && setResolution(v)} disabled={busy}>

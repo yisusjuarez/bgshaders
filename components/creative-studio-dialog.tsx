@@ -67,7 +67,7 @@ function MockupPreview({ config }: { config: ShaderConfig }) {
         ))}
       </div>
 
-      <div className="relative grid h-[390px] place-items-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-inner">
+      <div className="relative grid h-[min(48dvh,390px)] min-h-56 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-inner">
         {mockup === "projection" && (
           <div className="relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_50%_25%,#27272a_0%,#09090b_58%,#000_100%)]">
             <div className="absolute top-[58px] left-1/2 h-[226px] w-[72%] -translate-x-1/2 overflow-hidden border-4 border-zinc-700 bg-black shadow-[0_0_50px_#ffffff18]">
@@ -165,7 +165,7 @@ export function LoopDesignerDialog({
             <TabsTrigger value="design"><Layers3 /> Design current loop</TabsTrigger>
             <TabsTrigger value="venue"><MonitorPlay /> Venue preview</TabsTrigger>
           </TabsList>
-          <TabsContent value="design" className="max-h-[70vh] space-y-5 overflow-y-auto pr-1 pt-2">
+          <TabsContent value="design" className="space-y-5 pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
               You are editing the current loop visible behind this dialog. Changes apply immediately. Use <strong className="text-white">+</strong> in the dock when you want to add this version to the Pack Tray.
             </div>

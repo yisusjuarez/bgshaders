@@ -55,12 +55,12 @@ export function DirectedPackBuilder({ initialConfig, onCreate }: Props) {
   };
 
   return (
-    <div className="max-h-[52vh] space-y-5 overflow-y-auto pr-1 pt-2">
+    <div className="space-y-5 pt-2 sm:max-h-[52vh] sm:overflow-y-auto sm:pr-1">
       <div className="rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-3 text-[12px] leading-5 text-white/65">
         <strong className="text-white">Directed Pack</strong> creates multiple related loops for one sellable collection. They share palette, motion and timing, but remain visually varied. It adds them to the Tray and does not change the loop currently playing.
       </div>
 
-      <div className="grid grid-cols-[1fr_110px] gap-3">
+      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-[1fr_110px]">
         <div className="space-y-1.5">
           <Label>Collection name</Label>
           <Input value={packName} onChange={(event) => setPackName(event.target.value)} maxLength={40} />
@@ -105,7 +105,7 @@ export function DirectedPackBuilder({ initialConfig, onCreate }: Props) {
         <Switch checked={layered} onCheckedChange={setLayered} />
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/10 pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4">
         <Button variant="ghost" size="sm" onClick={() => setBaseSeed(Math.floor(Math.random() * 1_000_000))}>
           <Shuffle className="size-4" /> Seed {baseSeed}
         </Button>

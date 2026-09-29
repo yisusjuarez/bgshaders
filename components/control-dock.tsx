@@ -56,7 +56,7 @@ function DockButton({
             aria-label={label}
             aria-pressed={active}
             className={cn(
-              "grid size-10 place-items-center rounded-xl text-white/75 transition-colors outline-none",
+              "grid size-11 place-items-center rounded-xl text-white/75 transition-colors outline-none sm:size-10",
               "hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60",
               active && "bg-white/15 text-white",
             )}
@@ -86,9 +86,10 @@ export function ControlDock({
   onOpenLibrary,
 }: Props) {
   return (
-    <div className="fixed bottom-6 left-1/2 z-20 -translate-x-1/2">
+    <div className="fixed right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-20 sm:right-auto sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2">
       <TooltipProvider delay={250}>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-zinc-950/55 py-2 pr-3 pl-2 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col items-center gap-1.5 rounded-3xl border border-white/10 bg-zinc-950/80 p-2 shadow-2xl backdrop-blur-xl sm:flex-row sm:gap-2 sm:rounded-full sm:bg-zinc-950/55 sm:py-2 sm:pr-3 sm:pl-2">
+        <div className="flex w-full items-center justify-around gap-1 sm:w-auto sm:justify-start sm:gap-2">
         <Tooltip>
           <TooltipTrigger render={<div />}>
             <LoopRing
@@ -100,7 +101,7 @@ export function ControlDock({
           </TooltipTrigger>
           <TooltipContent>{playing ? "Pause loop (Space)" : "Play loop (Space)"}</TooltipContent>
         </Tooltip>
-        <div className="h-8 w-px bg-white/10" />
+        <div className="hidden h-8 w-px bg-white/10 sm:block" />
         <DockButton label="Random loop (R)" onClick={onRandomize}>
           <Dices className="size-4.5" />
         </DockButton>
@@ -117,7 +118,9 @@ export function ControlDock({
         >
           <SlidersHorizontal className="size-4.5" />
         </DockButton>
-        <div className="h-8 w-px bg-white/10" />
+        </div>
+        <div className="flex w-full items-center justify-around gap-1 border-t border-white/10 pt-1.5 sm:w-auto sm:justify-start sm:gap-2 sm:border-0 sm:pt-0">
+        <div className="hidden h-8 w-px bg-white/10 sm:block" />
         <DockButton label="Add current loop to pack tray" onClick={onAddToLibrary}>
           <Plus className="size-4.5" />
         </DockButton>
@@ -131,14 +134,14 @@ export function ControlDock({
             </span>
           )}
         </div>
-        <div className="h-8 w-px bg-white/10" />
+        <div className="hidden h-8 w-px bg-white/10 sm:block" />
         <Tooltip>
           <TooltipTrigger
             render={
               <button
                 type="button"
                 onClick={onExport}
-                className="flex h-10 items-center gap-2 rounded-full bg-white px-4 font-mono text-[11px] font-medium tracking-[0.14em] text-zinc-950 uppercase transition-transform outline-none hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-100"
+                className="flex h-11 min-w-28 items-center justify-center gap-2 rounded-full bg-white px-4 font-mono text-[11px] font-medium tracking-[0.14em] text-zinc-950 uppercase transition-transform outline-none hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-100 sm:h-10 sm:min-w-0"
               />
             }
           >
@@ -147,6 +150,7 @@ export function ControlDock({
           </TooltipTrigger>
           <TooltipContent>Export current loop as video</TooltipContent>
         </Tooltip>
+        </div>
         </div>
       </TooltipProvider>
     </div>

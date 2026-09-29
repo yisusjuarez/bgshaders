@@ -133,7 +133,7 @@ export default function Home() {
       <ShaderCanvas config={config} playing={playing} phaseRef={phaseRef} />
 
       {/* wordmark + current design */}
-      <header className="pointer-events-none fixed top-5 left-5 z-20 flex flex-col gap-2">
+      <header className="pointer-events-none fixed top-[max(1rem,env(safe-area-inset-top))] right-4 left-4 z-20 flex flex-col gap-2 sm:top-5 sm:right-auto sm:left-5">
         <div className="flex items-baseline gap-2 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
           <h1 className="font-mono text-sm font-semibold tracking-[0.28em] lowercase">
             jedylabs
@@ -142,9 +142,9 @@ export default function Home() {
             loop studio
           </span>
         </div>
-        <div className="pointer-events-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-zinc-950/45 px-3 py-1.5 backdrop-blur-xl">
-          <span className="text-[13px] font-medium text-white">{config.name}</span>
-          <span className="font-mono text-[10px] tracking-[0.14em] text-white/55 uppercase">
+        <div className="pointer-events-auto flex min-w-0 w-fit max-w-full flex-col gap-0.5 rounded-2xl border border-white/10 bg-zinc-950/60 px-3 py-2 backdrop-blur-xl sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:py-1.5">
+          <span className="truncate text-[13px] font-medium text-white">{config.name}</span>
+          <span className="block max-w-full truncate font-mono text-[10px] tracking-[0.1em] text-white/55 uppercase sm:tracking-[0.14em]">
             {config.family}
             {config.secondaryFamily ? ` + ${config.secondaryFamily}` : ""} ·{" "}
             {config.motionDNA} · {config.bpm} bpm · seed {config.seed}
