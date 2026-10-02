@@ -1,5 +1,6 @@
 import { fragmentSource, layeredFragmentSource, VERTEX_SRC } from "./glsl";
-import { hexToRgb, type ShaderConfig } from "./schema";
+import { getShaderEffects, hexToRgb, type ShaderConfig } from "./schema";
+import { ShaderPostProcessor } from "./post-process";
 
 const UNIFORM_NAMES = [
   "u_res",
@@ -24,6 +25,7 @@ export class ShaderRenderer {
   private program: WebGLProgram | null = null;
   private programKey: string | null = null;
   private uniforms: UniformMap | null = null;
+  private postProcessor: ShaderPostProcessor | null = null;
 
   constructor(
     canvas: HTMLCanvasElement | OffscreenCanvas,
@@ -92,6 +94,12 @@ export class ShaderRenderer {
     this.useConfig(config);
     if (gl.canvas.width !== width) gl.canvas.width = width;
     if (gl.canvas.height !== height) gl.canvas.height = height;
+    const effects = getShaderEffects(config);
+    const hasEffects = effects.blur > 0 || effects.glow > 0 || effects.saturation !== 1 || effects.contrast !== 1;
+    if (hasEffects) {
+      this.postProcessor ??= new ShaderPostProcessor(gl);
+      this.postProcessor.begin(width, height);
+    } else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, width, height);
     gl.useProgram(this.program);
     const u = this.uniforms!;
@@ -111,6 +119,7 @@ export class ShaderRenderer {
     gl.uniform1f(u.u_vignette, config.vignette);
     gl.uniform1f(u.u_blend_amount, config.blendAmount);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (hasEffects) this.postProcessor!.finish(effects, width, height);
   }
 
   /**
@@ -121,6 +130,8 @@ export class ShaderRenderer {
    * immediately.
    */
   dispose(opts: { releaseContext?: boolean } = {}) {
+    this.postProcessor?.dispose();
+    this.postProcessor = null;
     if (this.program) this.gl.deleteProgram(this.program);
     this.program = null;
     this.programKey = null;

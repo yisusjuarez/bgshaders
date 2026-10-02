@@ -2,7 +2,7 @@ import { strToU8, Zip, ZipPassThrough } from "fflate";
 import { colorFamily, matchPaletteName } from "@/lib/library/color";
 import { ShaderRenderer } from "@/lib/shader/renderer";
 import { FAMILY_LABELS } from "@/lib/shader/labels";
-import type { ShaderConfig } from "@/lib/shader/schema";
+import { getShaderEffects, type ShaderConfig, type ShaderEffects } from "@/lib/shader/schema";
 import {
   clipExtension,
   renderClipBlob,
@@ -86,6 +86,7 @@ export function clipMetadata(
     grain: config.grain,
     sharpness: config.sharpness,
     vignette: config.vignette,
+    effects: getShaderEffects(config),
     colors: config.colors,
     palette: matchPaletteName(config.colors),
     colorFamily: colorFamily(config.colors),
@@ -167,6 +168,7 @@ export interface LibraryManifest {
     bpm: number;
     beats: number;
     sharpness: number;
+    effects: Readonly<ShaderEffects>;
     tags: string[];
   }[];
 }
@@ -202,6 +204,7 @@ export function buildManifest(
       bpm: e.config.bpm,
       beats: e.config.beats,
       sharpness: e.config.sharpness,
+      effects: getShaderEffects(e.config),
       tags: [
         e.config.family,
         FAMILY_LABELS[e.config.family],

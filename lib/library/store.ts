@@ -1,6 +1,6 @@
 "use client";
 
-import { shaderConfigSchema, type ShaderConfig } from "@/lib/shader/schema";
+import { getShaderEffects, shaderConfigSchema, type ShaderConfig } from "@/lib/shader/schema";
 import { z } from "zod";
 
 const LIBRARY_STORAGE = "jedylabs-library";
@@ -13,6 +13,7 @@ const librarySchema = z.array(z.unknown()).catch([]);
  * twice (or the same matrix cell) is a no-op.
  */
 export function configSignature(c: ShaderConfig): string {
+  const effects = getShaderEffects(c);
   return JSON.stringify([
     c.family,
     c.seed,
@@ -31,6 +32,10 @@ export function configSignature(c: ShaderConfig): string {
     c.bpm,
     c.beats,
     c.colors.map((x) => x.toLowerCase()),
+    effects.blur,
+    effects.glow,
+    effects.saturation,
+    effects.contrast,
   ]);
 }
 

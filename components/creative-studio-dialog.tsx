@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { FineTuneControls } from "@/components/fine-tune-controls";
+import { EffectsControls } from "@/components/effects-controls";
 import { useLanguage } from "@/components/language-provider";
 import { PaletteEditor } from "@/components/palette-editor";
 import { TempoControls } from "@/components/motion-controls";
@@ -124,6 +125,10 @@ export function LoopDesignerDialog({ open, onOpenChange, config, onChange }: Pro
             <Section title={t("Fine tune")}><FineTuneControls config={config} onChange={onChange} /></Section>
 
             <Section title={t("Palette")}><PaletteEditor compact colors={config.colors} onChange={(colors) => onChange({ colors })} /></Section>
+
+            <CollapsibleSection title={t("Effects")} value="effects">
+              <EffectsControls config={config} onChange={onChange} />
+            </CollapsibleSection>
 
             <CollapsibleSection title={t("Layers")} value="layers">
               <div className="space-y-1.5">

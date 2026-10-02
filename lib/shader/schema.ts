@@ -89,6 +89,17 @@ const hexColor = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "must be a #rrggbb hex color");
 
+export const shaderEffectsSchema = z.object({
+  blur: z.number().min(0).max(1).default(0),
+  glow: z.number().min(0).max(1).default(0),
+  saturation: z.number().min(0).max(2).default(1),
+  contrast: z.number().min(0).max(2).default(1),
+});
+export type ShaderEffects = z.infer<typeof shaderEffectsSchema>;
+export const DEFAULT_EFFECTS: Readonly<ShaderEffects> = Object.freeze({
+  blur: 0, glow: 0, saturation: 1, contrast: 1,
+});
+
 /**
  * Everything that affects pixels lives here. All motion inside the shaders is
  * driven by integer harmonics of a normalized phase, so any config renders a
@@ -114,6 +125,8 @@ export const shaderConfigSchema = z.object({
   /** post-process focus: -1 softens, 0 is neutral, 1 adds crisp local contrast */
   sharpness: z.number().min(-1).max(1).default(0.25),
   vignette: z.number().min(0).max(1),
+  /** Optional for exact compatibility with existing saved and seeded loops. */
+  effects: shaderEffectsSchema.optional(),
   /** loop length in seconds (playback and export) */
   duration: z.number().min(2).max(30),
   /** Optional second shader rendered in the same loop-safe fragment program. */
@@ -127,6 +140,10 @@ export const shaderConfigSchema = z.object({
 });
 
 export type ShaderConfig = z.infer<typeof shaderConfigSchema>;
+
+export function getShaderEffects(config: Pick<ShaderConfig, "effects">): Readonly<ShaderEffects> {
+  return config.effects ?? DEFAULT_EFFECTS;
+}
 
 /** Hot reload can retain a family that was removed from the active catalog. */
 export function resolveActiveFamily(family: string): Family {

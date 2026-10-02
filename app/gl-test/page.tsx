@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { ShaderRenderer } from "@/lib/shader/renderer";
 import { catalogConfig, curatedConfig, isCreativeFamily } from "@/lib/shader/catalog";
-import { BLEND_MODES, CREATIVE_FAMILIES, FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
+import { BLEND_MODES, CREATIVE_FAMILIES, DEFAULT_EFFECTS, FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
 import { exportMp4, webCodecsSupported } from "@/lib/export/encode";
 
 const SIZE = 96;
@@ -24,6 +24,19 @@ function meanDiff(a: Uint8Array, b: Uint8Array): number {
   let sum = 0;
   for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
   return sum / a.length;
+}
+
+function edgeDetail(pixels: Uint8Array): number {
+  let sum = 0;
+  let count = 0;
+  for (let i = 4; i < pixels.length; i += 4) {
+    if ((i / 4) % SIZE === 0) continue;
+    for (let channel = 0; channel < 3; channel++) {
+      sum += Math.abs(pixels[i + channel] - pixels[i - 4 + channel]);
+      count++;
+    }
+  }
+  return sum / count;
 }
 
 export default function GlTest() {
@@ -168,6 +181,48 @@ export default function GlTest() {
             );
           }
         }
+
+        // Read actual GPU output: defaults are pixel-identical, wide blur
+        // removes detail, glow adds light, and desaturation produces grey.
+        try {
+          const cfg = { ...curatedConfig("metallicWaves"), grain: 0 };
+          const draw = (patch: Partial<typeof cfg>) => {
+            renderer!.render({ ...cfg, ...patch }, 0.125, SIZE, SIZE);
+            return readPixels(gl);
+          };
+          const baseline = draw({});
+          const neutral = draw({ effects: { ...DEFAULT_EFFECTS } });
+          out.push(`effects neutral: ${meanDiff(baseline, neutral) === 0 ? "OK" : "FAIL"}`);
+          const blurred = draw({ effects: { ...DEFAULT_EFFECTS, blur: 1 } });
+          out.push(`effects blur: ${edgeDetail(blurred) < edgeDetail(baseline) * 0.8 ? "OK" : "FAIL"}`);
+          const glowing = draw({ effects: { ...DEFAULT_EFFECTS, glow: 1 } });
+          const addsLight = glowing.every((value, i) => i % 4 === 3 || value >= baseline[i] - 1);
+          out.push(`effects glow: ${addsLight && meanDiff(baseline, glowing) > 0.1 ? "OK" : "FAIL"}`);
+          const grey = draw({ effects: { ...DEFAULT_EFFECTS, saturation: 0 } });
+          let monochrome = true;
+          for (let i = 0; i < grey.length; i += 4) {
+            if (Math.abs(grey[i] - grey[i + 1]) > 1 || Math.abs(grey[i + 1] - grey[i + 2]) > 1) monochrome = false;
+          }
+          out.push(`effects saturation: ${monochrome ? "OK" : "FAIL"}`);
+          const flat = draw({ effects: { ...DEFAULT_EFFECTS, contrast: 0 } });
+          out.push(`effects contrast: ${flat.every((value, i) => i % 4 === 3 || Math.abs(value - 128) <= 1) ? "OK" : "FAIL"}`);
+          out.push(`effects reset: ${meanDiff(baseline, draw({ effects: { ...DEFAULT_EFFECTS } })) === 0 ? "OK" : "FAIL"}`);
+        } catch (error) {
+          out.push(`effects: FAIL ${error instanceof Error ? error.message : error}`);
+        }
+
+        for (const family of FAMILIES) {
+          try {
+            const cfg = { ...catalogConfig(421, family), effects: { blur: 0.6, glow: 0.45, saturation: 1.25, contrast: 1.1 } };
+            renderer.render(cfg, 0, SIZE, SIZE);
+            const first = readPixels(gl);
+            renderer.render(cfg, 1, SIZE, SIZE);
+            const exact = meanDiff(first, readPixels(gl));
+            out.push(`effects ${family}: ${exact === 0 && gl.getError() === gl.NO_ERROR ? "OK" : "FAIL"} exact=${exact.toFixed(4)}`);
+          } catch (error) {
+            out.push(`effects ${family}: FAIL ${error instanceof Error ? error.message : error}`);
+          }
+        }
       } catch (e) {
         out.push(`context: FAIL ${e instanceof Error ? e.message : e}`);
       }
@@ -176,7 +231,7 @@ export default function GlTest() {
 
       if (webCodecsSupported()) {
         try {
-          const cfg = { ...curatedConfig("liquidMetal"), duration: 2 };
+          const cfg = { ...curatedConfig("liquidMetal"), effects: { blur: 0.6, glow: 0.45, saturation: 1.25, contrast: 1.1 }, duration: 2 };
           const { blob, filename } = await exportMp4(
             cfg,
             { width: 320, height: 180, fps: 30, format: "mp4" },

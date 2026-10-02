@@ -106,7 +106,7 @@ layers and extreme complexity were not included in that performance result.
 - shadcn Scroll Area hides the native scrollbar and renders its custom thumb;
   the editor header remains fixed while its controls scroll. Layers and Tempo
   start collapsed, toggle independently and retain their settings when reopened.
-- All 299 WebGL checks pass. The former fixed white-text contrast gate was removed
+- All 387 WebGL checks pass. The former fixed white-text contrast gate was removed
   together with automatic darkening; scene colors are rendered at their authored intensity.
 - Geometric poster, Accretion disk, Chrome knot, Petal sculpture, Jellyfish and
   both fans and Horizon folds are absent from all active selectors and generators. Saved legacy
@@ -117,6 +117,37 @@ layers and extreme complexity were not included in that performance result.
   Obsolete live types resolve to an active type while preserving edits; obsolete
   secondary layers are cleared. The removed-Horizon-folds failure was reproduced
   in Chrome before the fix and passes the same scenario after the fix.
-- 97 unit tests, TypeScript and lint pass. The expanded collection production
-  build also passes; the subsequent live-state recovery was checked with TypeScript
-  and the reproduced browser scenario.
+- 101 unit tests, TypeScript, lint and the production build pass.
+
+## Adjustable effects
+
+The Edit loop sidebar includes a collapsed shadcn Effects accordion with blur,
+glow, saturation and contrast. Missing effect settings in old configs mean
+neutral values (0, 0, 1, 1). The frozen legacy fixtures remain unchanged.
+Reset effects leaves the composition, palette, timing and other edits intact.
+
+Effects run after the complete scene and its secondary layer are rendered.
+Blur and bloom use separate horizontal and vertical texture passes with mip
+filtering; no scene shader is repeated for a blur sample. Glow extracts bright
+areas and adds their softened light. Saturation and contrast operate on that
+result. Radii scale with the frame's shorter side so preview and export retain
+the same appearance. No animation history is used.
+
+Neutral effects bypass all extra passes and preserve exact original pixels.
+GPU checks verify blur reduces spatial detail, glow increases brightness
+without dimming pixels, zero saturation produces monochrome, zero contrast
+produces neutral grey, and resetting restores the original pixels. Combined
+effects preserve loop closure for all authored styles; all four blend modes,
+portrait/square/landscape resizing and returning to the neutral path pass.
+The permanent `/gl-test` diagnostic also covers effects on every active family.
+
+The real two-second MP4 ZIP test includes effect settings in its sidecar and
+full config. Tray deduplication distinguishes effect variants while treating
+missing effects and explicit neutral effects as the same look. 101 unit tests
+cover compatibility, persistence, reproduction metadata and variant identity.
+
+A paired 1080p run on the same Apple M4 measured Constellation trails at 32.4 ms
+synchronized p95 with neutral effects and 27.3 ms with combined effects (blur
+0.6, glow 0.45, saturation 1.25, contrast 1.1). The GPU p95 values were 30.16 ms
+and 25.65 ms respectively, across 20 phases after warmup. These machine-specific
+times vary with load; they do not establish a speed improvement from effects.

@@ -44,9 +44,13 @@ Open http://localhost:3000.
   The loop stays visible and responds immediately. Tempo controls calculate
   a duration from BPM and beats; **Apply tempo duration** uses it, or set
   seconds directly in Fine tune.
-- The editor uses shadcn **Scroll Area** with a fixed header. **Layers** and
+- The editor uses shadcn **Scroll Area** with a fixed header. **Effects**, **Layers** and
   **Tempo** are shadcn accordions, initially collapsed; closing them preserves
   their settings.
+- **Effects** adds adjustable blur, glow, saturation and contrast to the whole
+  loop, including secondary layers. All four start neutral; **Reset effects**
+  restores only those controls. Effects are saved with each tray item and use
+  the same rendering pipeline in the preview, thumbnails and exported videos.
 - **Random** samples all 82 loop types, including hologram, crystal prisms, fractals,
   noise, waves, singularity, warped noise, and the existing aurora, plasma,
   smoke, nebula, and lava lamp effects.
