@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GitFork } from "lucide-react";
+import { toast } from "sonner";
 import { AiDialog } from "@/components/ai-dialog";
 import { ControlDock } from "@/components/control-dock";
 import { LoopDesignerDialog } from "@/components/creative-studio-dialog";
@@ -171,6 +172,10 @@ export default function Home() {
         onAi={() => setAiOpen(true)}
         onCreative={() => setCreativeOpen(true)}
         onExport={() => { setExportTarget("current"); setExportOpen(true); }}
+        onAddToLibrary={() => {
+          const added = addToLibrary([config]);
+          toast(t(added ? "Added to pack tray" : "Already in pack tray"));
+        }}
         onOpenLibrary={() => setLibraryOpen(true)}
       />
 

@@ -139,7 +139,7 @@ export function LoopDesignerDialog({ open, onOpenChange, config, onChange }: Pro
                   onValueChange={(value) => value && onChange({ secondaryFamily: value === "none" ? null : value as Family })}
                 >
                   <SelectTrigger id="secondary-layer" aria-label={t("Secondary layer")} className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent className="max-h-64">{[{ value: "none", label: t("None") }, ...localizedFamilies].map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                  <SelectContent alignItemWithTrigger={false} align="start" className="max-h-[min(16rem,var(--available-height))]">{[{ value: "none", label: t("None") }, ...localizedFamilies].map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">

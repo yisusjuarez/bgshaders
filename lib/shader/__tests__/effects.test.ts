@@ -6,7 +6,7 @@ import { buildManifest, clipMetadata } from "@/lib/export/library";
 
 const config = curatedConfig("metallicWaves");
 const effects = { blur: 0.65, glow: 0.4, saturation: 1.25, contrast: 0.85 };
-const settings = { width: 1920, height: 1080, fps: 30, format: "mp4" as const };
+const settings = { width: 1920, height: 1080, fps: 30, format: "mp4" } as const;
 
 describe("loop effects persistence", () => {
   it("keeps existing loops neutral without rewriting their stored config", () => {

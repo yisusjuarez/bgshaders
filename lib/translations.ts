@@ -13,6 +13,7 @@ export const SPANISH: Record<string, string> = {
   "Loop Designer & Venue Preview (C)": "Diseñador y vista de escenario (C)",
   "Parameters (P)": "Parámetros (P)",
   "Add current loop to pack tray": "Añadir loop a la bandeja",
+  "Add": "Añadir",
   "Pack Builder & Tray (L)": "Creador de packs y bandeja (L)",
   "Export current loop as video": "Exportar el loop actual como video",
   "Added to pack tray": "Añadido a la bandeja",

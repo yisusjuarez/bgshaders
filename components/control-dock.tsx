@@ -4,6 +4,7 @@ import {
   Dices,
   Download,
   Library,
+  Plus,
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -28,6 +29,7 @@ interface Props {
   onAi: () => void;
   onCreative: () => void;
   onExport: () => void;
+  onAddToLibrary: () => void;
   onOpenLibrary: () => void;
 }
 
@@ -72,6 +74,7 @@ export function ControlDock({
   onAi,
   onCreative,
   onExport,
+  onAddToLibrary,
   onOpenLibrary,
 }: Props) {
   const { t } = useLanguage();
@@ -110,6 +113,9 @@ export function ControlDock({
         </div>
         <div className="flex w-full items-center justify-around gap-1 border-t border-white/10 pt-1.5 sm:w-auto sm:justify-start sm:gap-2 sm:border-0 sm:pt-0">
         <div className="hidden h-8 w-px bg-white/10 sm:block" />
+        <DockButton label={t("Add current loop to pack tray")} mobileText={t("Add")} onClick={onAddToLibrary}>
+          <Plus className="size-4.5" />
+        </DockButton>
         <div className="relative">
           <DockButton label={t("Pack (L)")} mobileText={t("Pack")} onClick={onOpenLibrary}>
             <Library className="size-4.5" />
