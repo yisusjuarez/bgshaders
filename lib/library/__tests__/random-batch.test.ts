@@ -4,7 +4,7 @@ import {
   MAX_RANDOM_COUNT,
   randomBaseSeed,
 } from "../random-batch";
-import { randomConfig } from "@/lib/shader/random";
+import { catalogConfig } from "@/lib/shader/catalog";
 import { shaderConfigSchema } from "@/lib/shader/schema";
 
 describe("buildRandomBatch", () => {
@@ -38,7 +38,7 @@ describe("buildRandomBatch", () => {
   it("keeps each draw's own duration when none is given", () => {
     const batch = buildRandomBatch({ count: 3, baseSeed: 5 });
     expect(batch.map((c) => c.duration)).toEqual(
-      [5, 6, 7].map((s) => randomConfig(s).duration),
+      [5, 6, 7].map((s) => catalogConfig(s).duration),
     );
   });
 

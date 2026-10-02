@@ -59,14 +59,14 @@ export function TempoControls({
   onChange: (bpm: number, beats: number) => void;
 }) {
   const { t } = useLanguage();
-  const beatOptions = [4, 8, 16, 32, 64];
+  const beatOptions = Array.from({ length: 64 }, (_, index) => index + 1);
   const validBeats = (nextBpm: number) =>
     beatOptions.filter((value) => {
       const duration = durationFromTempo(nextBpm, value);
       return duration >= 2 && duration <= 30;
     });
   const changeBpm = (nextBpm: number) => {
-    const clamped = Math.min(240, Math.max(30, nextBpm));
+    const clamped = Math.min(240, Math.max(30, Math.round(nextBpm)));
     const valid = validBeats(clamped);
     const nextBeats = valid.includes(beats)
       ? beats
@@ -82,10 +82,14 @@ export function TempoControls({
         <Label>BPM</Label>
         <Input
           type="number"
+          aria-label="BPM"
           min={30}
           max={240}
           value={bpm}
-          onChange={(event) => changeBpm(Number(event.target.value))}
+          onChange={(event) => {
+            const next = event.currentTarget.valueAsNumber;
+            if (Number.isFinite(next)) changeBpm(next);
+          }}
         />
       </div>
       <div className="space-y-1.5">
@@ -98,7 +102,7 @@ export function TempoControls({
           value={String(beats)}
           onValueChange={(value) => value && onChange(bpm, Number(value))}
         >
-          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label={t("Beats per loop")} className="w-full"><SelectValue /></SelectTrigger>
           <SelectContent>
             {validBeats(bpm).map((value) => (
               <SelectItem key={value} value={String(value)}>{value}</SelectItem>

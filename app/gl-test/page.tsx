@@ -4,8 +4,8 @@
 // runs a real (tiny) WebCodecs export.
 import { useEffect, useState } from "react";
 import { ShaderRenderer } from "@/lib/shader/renderer";
-import { randomConfig } from "@/lib/shader/random";
-import { FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
+import { catalogConfig, curatedConfig, isCreativeFamily } from "@/lib/shader/catalog";
+import { BACKDROP_FAMILIES, BLEND_MODES, CREATIVE_FAMILIES, FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
 import { exportMp4, webCodecsSupported } from "@/lib/export/encode";
 
 const SIZE = 96;
@@ -24,6 +24,25 @@ function meanDiff(a: Uint8Array, b: Uint8Array): number {
   let sum = 0;
   for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
   return sum / a.length;
+}
+
+const LINEAR_RGB = Array.from({ length: 256 }, (_, value) => {
+  const srgb = value / 255;
+  return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+});
+
+function minimumTextContrast(pixels: Uint8Array): number {
+  let brightest = 0;
+  // Central half of the width and central 60% of the height, independent of
+  // pattern scale: the intended field for large projected white lyrics.
+  for (let y = Math.ceil(SIZE * 0.2); y < SIZE * 0.8; y++) {
+    for (let x = Math.ceil(SIZE * 0.25); x < SIZE * 0.75; x++) {
+      const i = (y * SIZE + x) * 4;
+      const luminance = LINEAR_RGB[pixels[i]] * 0.2126 + LINEAR_RGB[pixels[i + 1]] * 0.7152 + LINEAR_RGB[pixels[i + 2]] * 0.0722;
+      brightest = Math.max(brightest, luminance);
+    }
+  }
+  return 1.05 / (brightest + 0.05);
 }
 
 export default function GlTest() {
@@ -48,9 +67,12 @@ export default function GlTest() {
             let worstExact = 0;
             let worstSeam = 0;
             let worstAdjacent = 0;
-            const suspects: number[] = [];
-            for (const seed of SEEDS) {
-              const cfg = { ...randomConfig(seed), family };
+            const suspects: string[] = [];
+            for (const sample of SEEDS.flatMap((seed) =>
+              (isCreativeFamily(family) ? [1, 2, 3] : [1]).map((speed) => ({ seed, speed })),
+            )) {
+              const { seed, speed } = sample;
+              const cfg = { ...catalogConfig(seed, family), speed };
               renderer.render(cfg, 0, SIZE, SIZE);
               const first = readPixels(gl);
               // phase 1.0 wraps to 0 — must be bit-exact with frame 0
@@ -81,7 +103,7 @@ export default function GlTest() {
               }
               const exact = meanDiff(first, wrapped);
               const seam = meanDiff(last, first);
-              if (!(exact === 0 && seam <= adjacent * 2 + 0.5)) suspects.push(seed);
+              if (!(exact === 0 && seam <= adjacent * 2 + 0.5)) suspects.push(`${seed}/${speed}x`);
               worstExact = Math.max(worstExact, exact);
               worstSeam = Math.max(worstSeam, seam);
               worstAdjacent = Math.max(worstAdjacent, adjacent);
@@ -90,11 +112,30 @@ export default function GlTest() {
               `${family}: OK exact=${worstExact.toFixed(4)} seam=${worstSeam.toFixed(3)} adjacent=${worstAdjacent.toFixed(3)} ${
                 suspects.length === 0
                   ? "LOOP-PERFECT"
-                  : `LOOP-SUSPECT seeds=${suspects.join(",")}`
+                  : `LOOP-SUSPECT seed/speed=${suspects.join(",")}`
               }`,
             );
           } catch (e) {
             out.push(`${family}: FAIL ${e instanceof Error ? e.message : e}`);
+          }
+        }
+
+        // Hold all controls and colors fixed: seed must change actual structure,
+        // and a mid-cycle frame must differ from the first frame.
+        for (const family of CREATIVE_FAMILIES) {
+          try {
+            const cfg = curatedConfig(family);
+            renderer.render(cfg, 0, SIZE, SIZE);
+            const first = readPixels(gl);
+            renderer.render({ ...cfg, seed: cfg.seed + 1 }, 0, SIZE, SIZE);
+            const otherSeed = readPixels(gl);
+            renderer.render(cfg, 0.25, SIZE, SIZE);
+            const moving = readPixels(gl);
+            const structure = meanDiff(first, otherSeed);
+            const motion = meanDiff(first, moving);
+            out.push(`creative ${family}: ${structure > 0.1 && motion > 0.1 ? "OK" : "FAIL"} structure=${structure.toFixed(3)} motion=${motion.toFixed(3)}`);
+          } catch (e) {
+            out.push(`creative ${family}: FAIL ${e instanceof Error ? e.message : e}`);
           }
         }
 
@@ -105,6 +146,9 @@ export default function GlTest() {
           ["kaleido", "radar", "screen"],
           ["caustics", "checker", "multiply"],
           ["glitch", "glitch", "difference"],
+          ...CREATIVE_FAMILIES.flatMap((family) => BLEND_MODES.map((mode): [Family, Family, BlendMode] => [family, family, mode])),
+          ["liquidMetal", "smoke", "screen"],
+          ["constellation", "iridescentGlass", "mix"],
         ];
         for (const [primary, secondary, blendMode] of layeredCases) {
           try {
@@ -113,8 +157,7 @@ export default function GlTest() {
             let worstAdjacent = 0;
             for (const seed of SEEDS.slice(0, 5)) {
               const cfg = {
-                ...randomConfig(seed),
-                family: primary,
+                ...catalogConfig(seed, primary),
                 secondaryFamily: secondary,
                 blendMode,
                 blendAmount: 0.55,
@@ -144,6 +187,23 @@ export default function GlTest() {
             );
           }
         }
+        // Check rendered pixels, including an all-white palette, so contrast
+        // holds even when users replace the authored colors with bright ones.
+        for (const family of BACKDROP_FAMILIES) {
+          try {
+            const cfg = curatedConfig(family);
+            let contrast = Infinity;
+            for (const colors of [cfg.colors, ["#FFFFFF", "#FFFFFF"]]) {
+              for (const phase of [0, 0.25, 0.5, 0.75]) {
+                renderer.render({ ...cfg, colors }, phase, SIZE, SIZE);
+                contrast = Math.min(contrast, minimumTextContrast(readPixels(gl)));
+              }
+            }
+            out.push(`text ${family}: ${contrast >= 4.5 ? "OK" : "FAIL"} contrast=${contrast.toFixed(2)}:1`);
+          } catch (e) {
+            out.push(`text ${family}: FAIL ${e instanceof Error ? e.message : e}`);
+          }
+        }
       } catch (e) {
         out.push(`context: FAIL ${e instanceof Error ? e.message : e}`);
       }
@@ -152,7 +212,7 @@ export default function GlTest() {
 
       if (webCodecsSupported()) {
         try {
-          const cfg = { ...randomConfig(1), duration: 2 };
+          const cfg = { ...curatedConfig("liquidMetal"), duration: 2 };
           const { blob, filename } = await exportMp4(
             cfg,
             { width: 320, height: 180, fps: 30, format: "mp4" },

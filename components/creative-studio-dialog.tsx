@@ -1,42 +1,25 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Layers3, MonitorPlay, SlidersHorizontal } from "lucide-react";
-import { MotionCards, TempoControls } from "@/components/motion-controls";
+import { SlidersHorizontal } from "lucide-react";
+import { FineTuneControls } from "@/components/fine-tune-controls";
 import { useLanguage } from "@/components/language-provider";
 import { PaletteEditor } from "@/components/palette-editor";
-import { FineTuneControls } from "@/components/fine-tune-controls";
-import { ShaderCanvas } from "@/components/shader-canvas";
+import { TempoControls } from "@/components/motion-controls";
+import { LoopStylePicker } from "@/components/loop-style-picker";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  applyMotionDNA,
-  BLEND_LABELS,
-  durationFromTempo,
-} from "@/lib/creative/pack";
-import { familyItems } from "@/lib/shader/labels";
-import {
-  BLEND_MODES,
-  type BlendMode,
-  type Family,
-  type ShaderConfig,
-} from "@/lib/shader/schema";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { applyMotionDNA, BLEND_LABELS, durationFromTempo, MOTION_PROFILES } from "@/lib/creative/pack";
+import { catalogConfig, curatedConfig, isCreativeFamily } from "@/lib/shader/catalog";
+import { categoryForFamily, LOOP_CATEGORIES } from "@/lib/shader/categories";
+import { FAMILY_LABELS, familyItems } from "@/lib/shader/labels";
+import { BLEND_MODES, MOTION_DNAS, type BlendMode, type Family, type MotionDNA, type ShaderConfig } from "@/lib/shader/schema";
 
 interface Props {
   open: boolean;
@@ -45,213 +28,163 @@ interface Props {
   onChange: (patch: Partial<ShaderConfig>) => void;
 }
 
-function MockupPreview({ config }: { config: ShaderConfig }) {
-  const { t } = useLanguage();
-  const phaseRef = useRef(0);
-  const [mockup, setMockup] = useState<"projection" | "led" | "immersive">("projection");
-  const mockups = [
-    { value: "projection" as const, label: "Projection screen" },
-    { value: "led" as const, label: "LED stage" },
-    { value: "immersive" as const, label: "Immersive room" },
-  ];
-
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        {mockups.map((item) => (
-          <Button
-            key={item.value}
-            variant={mockup === item.value ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setMockup(item.value)}
-          >
-            {t(item.label)}
-          </Button>
-        ))}
-      </div>
-
-      <div className="relative grid h-[min(48dvh,390px)] min-h-56 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-inner">
-        {mockup === "projection" && (
-          <div className="relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_50%_25%,#27272a_0%,#09090b_58%,#000_100%)]">
-            <div className="absolute top-[58px] left-1/2 h-[226px] w-[72%] -translate-x-1/2 overflow-hidden border-4 border-zinc-700 bg-black shadow-[0_0_50px_#ffffff18]">
-              <ShaderCanvas config={config} playing phaseRef={phaseRef} className="absolute!" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_55%,#0005_100%)]" />
-            </div>
-            <div className="absolute bottom-8 left-1/2 h-8 w-16 -translate-x-1/2 rounded-md border border-white/15 bg-zinc-700 shadow-[0_-80px_100px_35px_#ffffff10]">
-              <div className="absolute top-2 left-1/2 size-3 -translate-x-1/2 rounded-full bg-white/70 shadow-[0_0_18px_#fff]" />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 flex justify-around px-12 opacity-80">
-              {Array.from({ length: 10 }, (_, index) => (
-                <i key={index} className="h-7 w-10 rounded-t-full bg-black ring-1 ring-white/5" />
-              ))}
-            </div>
-            <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              {t("16:9 projector · dark venue")}
-            </div>
-          </div>
-        )}
-
-        {mockup === "led" && (
-          <div className="relative h-full w-full overflow-hidden bg-[radial-gradient(circle_at_50%_15%,#292524,#09090b_55%,#000)]">
-            <div className="absolute top-5 left-1/2 h-3 w-[88%] -translate-x-1/2 border-y border-zinc-600 bg-[repeating-linear-gradient(90deg,#52525b_0_3px,transparent_3px_30px)]" />
-            <div className="absolute top-10 left-1/2 h-[238px] w-[78%] -translate-x-1/2 overflow-hidden border-[6px] border-zinc-800 bg-black shadow-[0_0_60px_#ffffff14]">
-              <ShaderCanvas config={config} playing phaseRef={phaseRef} className="absolute!" />
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(#0000_75%,#0003),repeating-linear-gradient(0deg,#fff0_0_3px,#0003_3px_4px)]" />
-            </div>
-            <div className="absolute bottom-10 left-1/2 h-16 w-[88%] -translate-x-1/2 bg-gradient-to-b from-zinc-800 to-black [transform:perspective(500px)_rotateX(55deg)]" />
-            <div className="absolute bottom-8 left-[5%] h-24 w-12 bg-zinc-950 shadow-2xl ring-1 ring-white/10" />
-            <div className="absolute right-[5%] bottom-8 h-24 w-12 bg-zinc-950 shadow-2xl ring-1 ring-white/10" />
-            <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 opacity-90">
-              {Array.from({ length: 24 }, (_, index) => (
-                <i key={index} className="size-5 rounded-full bg-black" />
-              ))}
-            </div>
-            <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              {t("Wide LED wall · live stage")}
-            </div>
-          </div>
-        )}
-
-        {mockup === "immersive" && (
-          <div className="relative h-full w-full overflow-hidden bg-black">
-            <div className="absolute inset-7 overflow-hidden bg-zinc-950 shadow-[inset_0_0_80px_#000] [clip-path:polygon(12%_0,88%_0,100%_100%,0_100%)]">
-              <ShaderCanvas config={config} playing phaseRef={phaseRef} className="absolute!" />
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#0008_0%,transparent_20%,transparent_80%,#0008_100%)]" />
-            </div>
-            <div className="pointer-events-none absolute inset-7 [clip-path:polygon(0_0,14%_8%,14%_88%,0_100%)] bg-black/35 ring-1 ring-white/20" />
-            <div className="pointer-events-none absolute inset-7 [clip-path:polygon(100%_0,86%_8%,86%_88%,100%_100%)] bg-black/35 ring-1 ring-white/20" />
-            <div className="pointer-events-none absolute right-7 bottom-7 left-7 h-[28%] origin-bottom bg-gradient-to-b from-white/5 to-black/70 [clip-path:polygon(14%_0,86%_0,100%_100%,0_100%)]" />
-            <div className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/45 px-3 py-1 font-mono text-[10px] tracking-wider text-white/60 uppercase">
-              {t("Projection-mapped room · 3 surfaces")}
-            </div>
-            <div className="absolute bottom-8 left-1/2 h-14 w-5 -translate-x-1/2 rounded-t-full bg-black shadow-[0_0_20px_#000]">
-              <i className="absolute -top-3 left-1/2 size-5 -translate-x-1/2 rounded-full bg-black" />
-            </div>
-          </div>
-        )}
-      </div>
-      <p className="text-[12px] text-muted-foreground">
-        {t("Live scale preview for projection and giant-display use. This is a spatial mockup, not a color-calibration tool.")}
-      </p>
-    </div>
+    <section className="space-y-3 border-t border-white/10 pt-4">
+      <h3 className="font-mono text-[10px] tracking-[0.18em] text-white/50 uppercase">{title}</h3>
+      {children}
+    </section>
   );
 }
 
-export function LoopDesignerDialog({
-  open,
-  onOpenChange,
-  config,
-  onChange,
-}: Props) {
+function CollapsibleSection({ title, value, children }: { title: string; value: string; children: React.ReactNode }) {
+  return (
+    <Accordion>
+      <AccordionItem value={value} className="border-t border-white/10">
+        <AccordionTrigger className="items-center py-4 font-mono text-[10px] tracking-[0.18em] text-white/50 uppercase hover:no-underline">
+          {title}
+        </AccordionTrigger>
+        <AccordionContent className="space-y-3 pb-3">{children}</AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
+export function LoopDesignerDialog({ open, onOpenChange, config, onChange }: Props) {
   const { t } = useLanguage();
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const selectEscapeEvent = useRef<Event | null>(null);
+  const category = categoryForFamily(config.family);
   const localizedFamilies = familyItems.map((item) => ({ ...item, label: t(item.label) }));
-  const syncCurrentTempo = (nextBpm: number, nextBeats: number) => {
-    onChange({
-      bpm: nextBpm,
-      beats: nextBeats,
-      duration: durationFromTempo(nextBpm, nextBeats),
-    });
+  const categoryItems = LOOP_CATEGORIES.map((item) => ({ value: item.value, label: t(item.label) }));
+  const typeItems = category.families.map((family) => ({ value: family, label: t(FAMILY_LABELS[family]) }));
+  const tempoDuration = durationFromTempo(config.bpm, config.beats);
+  const validTempoDuration = tempoDuration >= 2 && tempoDuration <= 30;
+
+  const selectFamily = (family: Family) => onChange({ family });
+  const restoreStyle = () => {
+    const defaults = isCreativeFamily(config.family)
+      ? curatedConfig(config.family)
+      : catalogConfig(config.seed, config.family);
+    onChange({ ...defaults, name: config.name, duration: config.duration, bpm: config.bpm, beats: config.beats });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Layers3 className="size-5" /> {t("Edit loop")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("Edit the single loop currently playing, then preview it in projection and giant-display environments.")}
-          </DialogDescription>
+    <Dialog open={open} onOpenChange={(next, details) => {
+      // Select popups are portaled; dismiss their menu before the side panel.
+      if (!next && details.reason === "escape-key" && (details.event === selectEscapeEvent.current || panelRef.current?.querySelector('[data-slot="select-trigger"][aria-expanded="true"]'))) {
+        details.cancel();
+        details.allowPropagation();
+        return;
+      }
+      onOpenChange(next);
+    }} modal={false} disablePointerDismissal>
+      <DialogContent
+        ref={panelRef}
+        onKeyDownCapture={(event) => {
+          // Remember the event before Select's document listener changes its state.
+          if (event.key === "Escape" && panelRef.current?.querySelector('[data-slot="select-trigger"][aria-expanded="true"]')) selectEscapeEvent.current = event.nativeEvent;
+        }}
+        showOverlay={false}
+        className="top-[max(5rem,env(safe-area-inset-top))] right-3 bottom-[calc(8rem+env(safe-area-inset-bottom))] left-auto flex w-80 max-w-[calc(100%-1.5rem)] max-h-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden bg-zinc-950/90 p-0 shadow-2xl backdrop-blur-xl sm:top-20 sm:right-5 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))] sm:max-w-xs"
+      >
+        <DialogHeader className="shrink-0 p-4 pr-10">
+          <DialogTitle className="flex items-center gap-2"><SlidersHorizontal className="size-5" /> {t("Edit loop")}</DialogTitle>
+          <DialogDescription>{t("Customize the current loop. Changes apply immediately.")}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="design">
-          <TabsList className="w-full">
-            <TabsTrigger value="design"><Layers3 /> {t("Design")}</TabsTrigger>
-            <TabsTrigger value="fine"><SlidersHorizontal /> {t("Fine tune")}</TabsTrigger>
-            <TabsTrigger value="venue"><MonitorPlay /> {t("Preview")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="design" className="space-y-5 pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] leading-5 text-white/65">
-              {t("Changes apply immediately to the current loop. Open Pack to add this version to the tray.")}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-4 px-4 pb-4">
+            <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label>{t("Primary layer")}</Label>
-                <Select items={localizedFamilies} value={config.family} onValueChange={(v) => v && onChange({ family: v as Family })}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{localizedFamilies.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
+                <Label htmlFor="loop-category">{t("Category")}</Label>
+                <Select items={categoryItems} value={category.value} onValueChange={(value) => {
+                  const next = LOOP_CATEGORIES.find((item) => item.value === value);
+                  if (next) selectFamily(next.families[0]);
+                }}>
+                  <SelectTrigger id="loop-category" aria-label={t("Category")} className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>{categoryItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>{t("Secondary layer")}</Label>
+                <Label htmlFor="loop-type">{t("Loop type")}</Label>
+                <Select items={typeItems} value={config.family} onValueChange={(value) => value && selectFamily(value as Family)}>
+                  <SelectTrigger id="loop-type" aria-label={t("Loop type")} className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>{typeItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <details onToggle={(event) => setBrowseOpen(event.currentTarget.open)} className="rounded-lg border border-white/10 p-2.5">
+                <summary className="cursor-pointer text-xs text-white/70">{t("Choose visually")} · {category.families.length}</summary>
+                {browseOpen && <div className="mt-3"><LoopStylePicker families={category.families} currentFamily={config.family} onSelect={selectFamily} /></div>}
+              </details>
+              <Button aria-label={t("Restore style defaults")} variant="outline" size="sm" className="w-full" onClick={restoreStyle}>{t("Restore style defaults")}</Button>
+            </div>
+
+            <Section title={t("Fine tune")}><FineTuneControls config={config} onChange={onChange} /></Section>
+
+            <Section title={t("Palette")}><PaletteEditor compact colors={config.colors} onChange={(colors) => onChange({ colors })} /></Section>
+
+            <CollapsibleSection title={t("Layers")} value="layers">
+              <div className="space-y-1.5">
+                <Label htmlFor="secondary-layer">{t("Secondary layer")}</Label>
                 <Select
                   items={[{ value: "none", label: t("None") }, ...localizedFamilies]}
                   value={config.secondaryFamily ?? "none"}
-                  onValueChange={(v) => onChange({ secondaryFamily: v === "none" ? null : v as Family })}
+                  onValueChange={(value) => value && onChange({ secondaryFamily: value === "none" ? null : value as Family })}
                 >
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t("None")}</SelectItem>
-                    {localizedFamilies.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger id="secondary-layer" aria-label={t("Secondary layer")} className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-64">{[{ value: "none", label: t("None") }, ...localizedFamilies].map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
               <div className="space-y-1.5">
-                <Label>{t("Blend mode")}</Label>
+                <Label htmlFor="blend-mode">{t("Blend mode")}</Label>
                 <Select
                   items={BLEND_MODES.map((mode) => ({ value: mode, label: t(BLEND_LABELS[mode]) }))}
-                  value={config.blendMode}
-                  onValueChange={(v) => v && onChange({ blendMode: v as BlendMode })}
-                  disabled={!config.secondaryFamily}
+                  value={config.blendMode} disabled={!config.secondaryFamily}
+                  onValueChange={(value) => value && onChange({ blendMode: value as BlendMode })}
                 >
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="blend-mode" aria-label={t("Blend mode")} className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>{BLEND_MODES.map((mode) => <SelectItem key={mode} value={mode}>{t(BLEND_LABELS[mode])}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between"><Label>{t("Layer amount")}</Label><span className="font-mono text-[11px]">{Math.round(config.blendAmount * 100)}%</span></div>
-                <Slider
-                  value={config.blendAmount}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  disabled={!config.secondaryFamily}
-                  onValueChange={(v) => onChange({ blendAmount: Array.isArray(v) ? v[0] : v })}
-                />
+                <div className="flex justify-between"><Label>{t("Layer amount")}</Label><span className="font-mono text-[11px] text-white/70">{Math.round(config.blendAmount * 100)}%</span></div>
+                <Slider aria-label={t("Layer amount")} value={config.blendAmount} min={0} max={1} step={0.01} disabled={!config.secondaryFamily} onValueChange={(value) => onChange({ blendAmount: Array.isArray(value) ? value[0] : value })} />
               </div>
-            </div>
+            </CollapsibleSection>
 
-            <div className="space-y-2">
-              <div>
-                <Label>{t("Motion character")}</Label>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{t("Apply a complete movement profile to the current loop.")}</p>
-              </div>
-              <MotionCards
+            <Section title={t("Motion character")}>
+              <Select
+                items={MOTION_DNAS.map((dna) => ({ value: dna, label: t(MOTION_PROFILES[dna].label) }))}
                 value={config.motionDNA}
-                onChange={(next) => onChange(applyMotionDNA(config, next))}
+                onValueChange={(value) => value && onChange(applyMotionDNA(config, value as MotionDNA))}
+              >
+                <SelectTrigger aria-label={t("Motion character")} className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>{MOTION_DNAS.map((dna) => <SelectItem key={dna} value={dna}>{t(MOTION_PROFILES[dna].label)}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-[10px] leading-4 text-white/40">{t("Apply a complete movement profile to the current loop.")}</p>
+            </Section>
+
+            <CollapsibleSection title={t("Tempo")} value="tempo">
+              <TempoControls bpm={config.bpm} beats={config.beats} onChange={(bpm, beats) => onChange({ bpm, beats })} />
+              <Button aria-label={t("Apply tempo duration")} variant="outline" size="sm" className="w-full" disabled={!validTempoDuration} onClick={() => onChange({ duration: tempoDuration })}>{t("Apply tempo duration")}</Button>
+              <p className="text-[10px] leading-4 text-white/40">{t("Apply BPM and beats to the duration, or set seconds directly in Fine tune.")}</p>
+            </CollapsibleSection>
+
+            <Section title={t("Name")}>
+              <Input
+                key={config.name} aria-label={t("Loop name")} defaultValue={config.name} maxLength={60}
+                onBlur={(event) => {
+                  const name = event.currentTarget.value.trim();
+                  if (name) onChange({ name });
+                  else event.currentTarget.value = config.name;
+                }}
+                onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
               />
-            </div>
-
-            <TempoControls bpm={config.bpm} beats={config.beats} onChange={syncCurrentTempo} />
-
-            <div className="space-y-2">
-              <Label>{t("Palette")}</Label>
-              <PaletteEditor colors={config.colors} onChange={(next) => onChange({ colors: next })} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="fine" className="pt-2 sm:max-h-[70vh] sm:overflow-y-auto sm:pr-1">
-            <FineTuneControls config={config} onChange={onChange} />
-          </TabsContent>
-
-          <TabsContent value="venue" className="pt-2">
-            <MockupPreview config={config} />
-          </TabsContent>
-        </Tabs>
+            </Section>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

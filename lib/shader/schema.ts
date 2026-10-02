@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const FAMILIES = [
+// Keep this order frozen: legacy ?seed= links depend on it.
+export const LEGACY_FAMILIES = [
   "mesh",
   "silk",
   "aurora",
@@ -44,7 +45,25 @@ export const FAMILIES = [
   "warpedNoise",
 ] as const;
 
-export type Family = (typeof FAMILIES)[number];
+export const BACKDROP_FAMILIES = [
+  "nacreFlow", "velvetFlow", "glassVeil", "prismField", "satinDunes", "metallicWaves",
+  "silkCurrent", "aquaVeil", "mistLayers", "magneticFlow",
+  "foldedCanopy", "contourRelief", "floatingVeils", "prismCurtain",
+  "lightPainting", "spectralRibbons", "causticPool", "eclipseHalo",
+  "starVortex", "dustDrift", "cutPaper", "opArtWeave", "neonLattice", "horizonFold",
+] as const;
+export type BackdropFamily = (typeof BACKDROP_FAMILIES)[number];
+export const CREATIVE_FAMILIES = [
+  "liquidMetal", "iridescentGlass", "ribbonSculpture", "architecture",
+  "constellation", "luminousOrbits", "moire", ...BACKDROP_FAMILIES,
+] as const;
+export type CreativeFamily = (typeof CREATIVE_FAMILIES)[number];
+export type LegacyFamily = (typeof LEGACY_FAMILIES)[number];
+// Retain decoding/rendering for saved exports; retired types are never offered
+// by the editor, Random, Matrix or directed packs.
+export const RETIRED_FAMILIES = ["accretion"] as const;
+export const FAMILIES = [...LEGACY_FAMILIES.filter((family) => family !== "accretion"), ...CREATIVE_FAMILIES] as const;
+export type Family = LegacyFamily | CreativeFamily;
 
 export const BLEND_MODES = ["mix", "screen", "multiply", "difference"] as const;
 export type BlendMode = (typeof BLEND_MODES)[number];
@@ -72,7 +91,7 @@ const hexColor = z
  */
 export const shaderConfigSchema = z.object({
   name: z.string().min(1).max(60),
-  family: z.enum(FAMILIES),
+  family: z.enum([...FAMILIES, ...RETIRED_FAMILIES]),
   seed: z.number().min(0).max(999_999),
   colors: z.array(hexColor).min(2).max(6),
   /** integer cycles per loop; 1 = one full cycle over the loop duration */
@@ -91,7 +110,7 @@ export const shaderConfigSchema = z.object({
   /** loop length in seconds (playback and export) */
   duration: z.number().min(2).max(30),
   /** Optional second shader rendered in the same loop-safe fragment program. */
-  secondaryFamily: z.enum(FAMILIES).nullable().default(null),
+  secondaryFamily: z.enum([...FAMILIES, ...RETIRED_FAMILIES]).nullable().default(null),
   blendMode: z.enum(BLEND_MODES).default("mix"),
   blendAmount: z.number().min(0).max(1).default(0.5),
   /** Creative intent and musical timing used by Pack Studio. */

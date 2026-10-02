@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { fragmentSource, layeredFragmentSource } from "../glsl";
 import { mulberry32, randomConfig } from "../random";
-import { FAMILIES, hexToRgb, shaderConfigSchema } from "../schema";
+import { FAMILIES, LEGACY_FAMILIES, hexToRgb, shaderConfigSchema } from "../schema";
 
 describe("shaderConfigSchema", () => {
   it("exposes the expanded catalog without the retired ridge family", () => {
-    expect(FAMILIES).toHaveLength(41);
+    expect(FAMILIES).toHaveLength(71);
     expect(new Set(FAMILIES).size).toBe(FAMILIES.length);
     expect(FAMILIES).not.toContain("ridge");
+    expect(FAMILIES).not.toContain("graphicPoster");
+    expect(FAMILIES).not.toContain("accretion");
+    for (const retired of ["chromeKnot", "petalBloom", "jellyfish", "coralFan", "origamiFan"]) {
+      expect(FAMILIES).not.toContain(retired);
+    }
     expect(FAMILIES).toEqual(
       expect.arrayContaining([
         "marble",
@@ -22,7 +27,6 @@ describe("shaderConfigSchema", () => {
         "equalizer",
         "radar",
         "hologram",
-        "accretion",
         "fractals",
         "noise",
         "waves",
@@ -63,7 +67,7 @@ describe("randomConfig", () => {
   it("covers every family", () => {
     const seen = new Set<string>();
     for (let s = 0; s < 2000; s++) seen.add(randomConfig(s).family);
-    expect(seen).toEqual(new Set(FAMILIES));
+    expect(seen).toEqual(new Set(LEGACY_FAMILIES));
   });
 });
 

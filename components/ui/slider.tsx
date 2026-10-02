@@ -10,10 +10,11 @@ function Slider({
   max = 100,
   ...props
 }: SliderPrimitive.Root.Props) {
-  const _values = Array.isArray(value)
-    ? value
-    : Array.isArray(defaultValue)
-      ? defaultValue
+  const currentValue = value ?? defaultValue
+  const _values = Array.isArray(currentValue)
+    ? currentValue
+    : typeof currentValue === "number"
+      ? [currentValue]
       : [min, max]
 
   return (

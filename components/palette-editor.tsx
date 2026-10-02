@@ -50,7 +50,7 @@ export function PaletteEditor({ colors, onChange, compact = false }: Props) {
             if (palette) onChange([...palette.colors]);
           }}
         >
-          <SelectTrigger className="min-w-0 flex-1 border-white/15 text-white">
+          <SelectTrigger aria-label={t("Palette")} className="min-w-0 flex-1 border-white/15 text-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

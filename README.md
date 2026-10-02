@@ -26,20 +26,37 @@ npm run dev
 Open http://localhost:3000.
 
 - **Space** play/pause · **R** random design · **C** edit loop · **L** pack
-- `?seed=N` in the URL reproduces a specific random design.
+- `?seed=N` reproduces the original 41-style generator, preserving older links.
+  Add `&family=liquidMetal` (or another new family) to explore a new style by seed.
 - Use the **ES / EN** switch in the top bar to change the interface language.
   The choice is saved in the browser; first-time visitors use their browser language.
 - Use the **GitHub** button in the top bar to view the source and contribute.
 
 ## Main workflow
 
-- **Edit** contains the current loop's design, fine controls and venue preview.
-  Changes appear immediately behind the dialog.
-- **Random** samples all 41 loop types, including hologram, accretion, fractals,
+- **Edit** contains all loop customization in one side panel. Choose among
+  71 types grouped into materials, organic, geometry, light, space, graphic
+  and digital categories; expand **Choose visually** for real shader thumbnails.
+  Type changes preserve your edits. **Restore style defaults** loads the selected
+  type's composition and palette while retaining your name and timing.
+- Fine tune, editable seeds, palettes with 2–6 colors, secondary layers, blend
+  modes, motion profiles, duration and naming are all available in **Edit**.
+  The loop stays visible and responds immediately. Tempo controls calculate
+  a duration from BPM and beats; **Apply tempo duration** uses it, or set
+  seconds directly in Fine tune.
+- The editor uses shadcn **Scroll Area** with a fixed header. **Layers** and
+  **Tempo** are shadcn accordions, initially collapsed; closing them preserves
+  their settings.
+- **Random** samples all 71 loop types, including hologram, crystal prisms, fractals,
   noise, waves, singularity, warped noise, and the existing aurora, plasma,
   smoke, nebula, and lava lamp effects.
-- **Beat sync** converts BPM and beat count into a mathematically exact loop length.
-- Palettes can use a preset or 2–6 individually editable custom colors.
+- The authored collection now includes 31 compositions, with 24 new backgrounds
+  designed for projected lyrics: velvet, nacre, glass, satin, mist, paper and light.
+  Their central field keeps highlights subdued, with low grain and 16-second
+  default loops. See the
+  [new collection](docs/creative-collection.jpg) and [validation notes](docs/creative-validation.md).
+  Geometric poster and Accretion disk are retired from the active catalog.
+- **Customize pack** also includes musical timing and custom palettes.
 - **Pack** adds the current loop or creates a group of loops. Guided creation is
   the default; random and matrix methods remain in the creation menu.
 - **Export** saves the current video or all loops in the Tray as one ZIP.
@@ -73,4 +90,7 @@ npm test        # vitest: config schema, RNG determinism, loop-safety of GLSL
 ```
 
 Visit `/gl-test` in a browser for the GPU-level loop-exactness and export
-diagnostics.
+diagnostics. New styles are checked across all three speeds, with structural
+seed variation and every blend mode tested alongside a real MP4 export.
+See [creative collection validation](docs/creative-validation.md) for measured
+rendering costs and browser verification.

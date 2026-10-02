@@ -1,4 +1,5 @@
 import type { BlendMode, Family } from "./schema";
+import { CREATIVE_SCENES } from "./creative-scenes";
 
 /**
  * Loop-safety contract: `u_phase` is in [0,1) and time may ONLY enter a shader
@@ -80,6 +81,7 @@ void main() {
 `;
 
 const SCENES: Record<Family, string> = {
+  ...CREATIVE_SCENES,
   // Soft color fields drifting on Lissajous orbits — the classic mesh gradient.
   mesh: `
 vec3 scene(vec2 uv, float T) {
@@ -944,9 +946,13 @@ export function fragmentSource(family: Family): string {
 }
 
 function namespaceScene(source: string, suffix: "A" | "B"): string {
-  return source
-    .replace(/\bscene\b/g, `scene${suffix}`)
-    .replace(/\bglitchField\b/g, `glitchField${suffix}`);
+  // Namespace every scene-local function, including material/path helpers.
+  const names = [...source.matchAll(/\b(?:void|float|int|bool|vec[234]|mat[234])\s+(\w+)\s*\(/g)].map((match) => match[1]);
+  let result = source;
+  for (const name of new Set(names)) {
+    result = result.replace(new RegExp(`\\b${name}(?=\\s*\\()`, "g"), `${name}${suffix}`);
+  }
+  return result;
 }
 
 const BLEND_GLSL: Record<BlendMode, string> = {

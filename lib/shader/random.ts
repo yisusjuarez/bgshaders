@@ -1,7 +1,8 @@
 import { PALETTES } from "./palettes";
 import {
-  FAMILIES,
+  LEGACY_FAMILIES,
   type Family,
+  type LegacyFamily,
   type MotionDNA,
   type ShaderConfig,
 } from "./schema";
@@ -36,8 +37,8 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 /** Per-family ranges tuned so random draws land somewhere good, not just valid. */
-const TUNING: Record<
-  Family,
+export const TUNING: Record<
+  LegacyFamily,
   { scale: [number, number]; warp: [number, number]; complexity: [number, number] }
 > = {
   mesh: { scale: [0.7, 1.6], warp: [0.1, 0.6], complexity: [0.3, 0.9] },
@@ -83,7 +84,7 @@ const TUNING: Record<
   warpedNoise: { scale: [0.7, 1.5], warp: [0.45, 1.0], complexity: [0.45, 0.95] },
 };
 
-function motionForFamily(family: Family): MotionDNA {
+export function motionForFamily(family: Family): MotionDNA {
   if (["mesh", "breath", "sweep", "aurora", "prism", "waves"].includes(family)) return "calm";
   if (["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise"].includes(family)) return "fluid";
   if (["rings", "kaleido", "spiral", "tunnel", "weave", "plasma", "fractals", "accretion", "singularity"].includes(family)) return "hypnotic";
@@ -92,10 +93,11 @@ function motionForFamily(family: Family): MotionDNA {
   return "cinematic";
 }
 
+/** Frozen legacy generator for existing seed-only URLs. Use catalogConfig for new draws. */
 export function randomConfig(seed?: number): ShaderConfig {
   const s = seed ?? Math.floor(Math.random() * 1_000_000);
   const rng = mulberry32(s);
-  const family = pick(rng, FAMILIES);
+  const family = pick(rng, LEGACY_FAMILIES);
   const palette = pick(rng, PALETTES);
   const t = TUNING[family];
   return {

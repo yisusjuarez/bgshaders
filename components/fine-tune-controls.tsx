@@ -1,7 +1,9 @@
 "use client";
 
 import { useLanguage } from "@/components/language-provider";
+import { Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { type ShaderConfig } from "@/lib/shader/schema";
 
@@ -55,26 +57,34 @@ function Row({
 export function FineTuneControls({ config, onChange }: Props) {
   const { t } = useLanguage();
   return (
-    <div className="grid gap-5 sm:grid-cols-2" role="group" aria-label={t("Loop parameters")}>
+    <div className="grid gap-5" role="group" aria-label={t("Loop parameters")}>
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
               {t("Seed")}
             </span>
-            <span className="font-mono text-[11px] tabular-nums text-white/80">
-              {config.seed}
-            </span>
           </div>
+          <div className="flex gap-2">
+          <Input
+            type="number" aria-label={t("Seed")} value={config.seed} min={0} max={999_999} step={1}
+            onChange={(event) => {
+              const seed = event.currentTarget.valueAsNumber;
+              if (Number.isFinite(seed)) onChange({ seed: Math.min(999_999, Math.max(0, Math.round(seed))) });
+            }}
+            className="min-w-0 flex-1 font-mono"
+          />
           <Button
             variant="outline"
-            size="sm"
-            className="w-full border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            size="icon"
+            aria-label={t("Reroll seed")}
+            className="shrink-0 border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
             onClick={() =>
               onChange({ seed: Math.floor(Math.random() * 1_000_000) })
             }
           >
-            {t("Reroll seed")}
+            <Dices className="size-4" />
           </Button>
+          </div>
         </div>
 
         <Row
@@ -140,6 +150,15 @@ export function FineTuneControls({ config, onChange }: Props) {
           step={0.01}
           format={(v) => v.toFixed(2)}
           onChange={(v) => onChange({ vignette: v })}
+        />
+        <Row
+          label={t("Duration")}
+          value={config.duration}
+          min={2}
+          max={30}
+          step={0.1}
+          format={(v) => `${v.toFixed(1)}s`}
+          onChange={(v) => onChange({ duration: v })}
         />
     </div>
   );

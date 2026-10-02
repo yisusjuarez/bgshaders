@@ -1,4 +1,5 @@
-import { mulberry32, randomConfig } from "@/lib/shader/random";
+import { mulberry32, TUNING } from "@/lib/shader/random";
+import { catalogConfig, isCreativeFamily } from "@/lib/shader/catalog";
 import type {
   BlendMode,
   Family,
@@ -24,7 +25,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   calm: {
     label: "Calm",
     description: "Slow, spacious and quiet",
-    families: ["mesh", "breath", "sweep", "aurora", "prism", "waves"],
+    families: ["mesh", "breath", "sweep", "aurora", "prism", "waves", "iridescentGlass", "nacreFlow", "contourRelief", "floatingVeils", "cutPaper"],
     speed: 1,
     scale: [0.65, 1.15],
     complexity: [0.25, 0.55],
@@ -37,7 +38,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   fluid: {
     label: "Fluid",
     description: "Organic, soft and continuously flowing",
-    families: ["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise"],
+    families: ["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise", "liquidMetal", "ribbonSculpture", "satinDunes", "metallicWaves", "silkCurrent", "mistLayers", "spectralRibbons", "causticPool"],
     speed: 1,
     scale: [0.7, 1.4],
     complexity: [0.45, 0.8],
@@ -50,7 +51,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   hypnotic: {
     label: "Hypnotic",
     description: "Repetition, symmetry and deep focus",
-    families: ["rings", "kaleido", "spiral", "tunnel", "weave", "plasma", "fractals", "singularity"],
+    families: ["rings", "kaleido", "spiral", "tunnel", "weave", "plasma", "fractals", "singularity", "architecture", "luminousOrbits", "moire", "velvetFlow", "magneticFlow", "foldedCanopy", "prismCurtain", "lightPainting", "dustDrift", "opArtWeave"],
     speed: 1,
     scale: [0.75, 1.35],
     complexity: [0.55, 0.9],
@@ -63,7 +64,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   energetic: {
     label: "Energetic",
     description: "Fast, bold and rhythm-forward",
-    families: ["rays", "ribbons", "chevron", "checker", "plasma", "equalizer", "accretion"],
+    families: ["rays", "ribbons", "chevron", "checker", "plasma", "equalizer", "velvetFlow", "spectralRibbons", "neonLattice"],
     speed: 2,
     scale: [0.85, 1.75],
     complexity: [0.55, 0.92],
@@ -76,7 +77,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   tech: {
     label: "Tech",
     description: "Precise, digital and interface-like",
-    families: ["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram"],
+    families: ["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram", "architecture", "moire", "neonLattice", "horizonFold"],
     speed: 2,
     scale: [0.9, 1.65],
     complexity: [0.5, 0.88],
@@ -89,7 +90,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   cinematic: {
     label: "Cinematic",
     description: "Layered, atmospheric and dramatic",
-    families: ["nebula", "aurora", "rays", "smoke", "orbitals", "prism"],
+    families: ["nebula", "aurora", "rays", "smoke", "orbitals", "prism", "iridescentGlass", "constellation", "glassVeil", "prismField", "aquaVeil", "eclipseHalo", "starVortex"],
     speed: 1,
     scale: [0.62, 1.28],
     complexity: [0.58, 0.92],
@@ -155,8 +156,15 @@ export function buildCreativePack(options: PackOptions): ShaderConfig[] {
   return Array.from({ length: count }, (_, index) => {
     const seed = (options.baseSeed + index) % 1_000_000;
     const rng = mulberry32(seed ^ 0x51f15e);
-    const base = randomConfig(seed);
     const family = profile.families[index % profile.families.length];
+    const base = catalogConfig(seed, family);
+    const tuning = isCreativeFamily(family) ? null : TUNING[family];
+    const draw = (key: "scale" | "complexity" | "warp") => {
+      if (!tuning) return base[key];
+      const min = Math.max(profile[key][0], tuning[key][0]);
+      const max = Math.min(profile[key][1], tuning[key][1]);
+      return lerp(min <= max ? [min, max] : tuning[key], rng());
+    };
     const secondaryFamily = options.layered
       ? profile.families[(index + 1 + Math.floor(rng() * (profile.families.length - 1))) % profile.families.length]
       : null;
@@ -166,9 +174,9 @@ export function buildCreativePack(options: PackOptions): ShaderConfig[] {
       family,
       colors: [...options.colors],
       speed: profile.speed,
-      scale: lerp(profile.scale, rng()),
-      complexity: lerp(profile.complexity, rng()),
-      warp: lerp(profile.warp, rng()),
+      scale: draw("scale"),
+      complexity: draw("complexity"),
+      warp: draw("warp"),
       grain: Math.min(0.2, Math.max(0, profile.grain + (rng() - 0.5) * 0.025)),
       vignette: Math.min(1, Math.max(0, profile.vignette + (rng() - 0.5) * 0.16)),
       duration,

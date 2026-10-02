@@ -9,6 +9,7 @@ import { ExportDialog } from "@/components/export-dialog";
 import { LibraryDialog } from "@/components/library-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { ShaderCanvas } from "@/components/shader-canvas";
+import { catalogConfig, isCreativeFamily } from "@/lib/shader/catalog";
 import { AI_ENABLED } from "@/lib/features";
 import {
   addConfigs,
@@ -17,8 +18,6 @@ import {
   setLibrary,
 } from "@/lib/library/store";
 import { randomConfig } from "@/lib/shader/random";
-import { FAMILY_LABELS } from "@/lib/shader/labels";
-import { MOTION_PROFILES } from "@/lib/creative/pack";
 import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
 
 // Hydration-safe placeholder. The URL/bootstrap effect replaces it with a
@@ -44,7 +43,10 @@ export default function Home() {
     (p: Partial<ShaderConfig>) => setConfig((c) => ({ ...c, ...p })),
     [],
   );
-  const randomize = useCallback(() => setConfig(randomConfig()), []);
+  const randomize = useCallback(() => {
+    phaseRef.current = 0;
+    setConfig(catalogConfig());
+  }, []);
 
   // Persist the curated tray and keep a ref so add/remove read the latest list.
   const commitLibrary = useCallback((next: ShaderConfig[]) => {
@@ -85,16 +87,18 @@ export default function Home() {
     const seedParam = params.get("seed");
     const familyParam = params.get("family");
     const seed = seedParam !== null ? Number(seedParam) : NaN;
-    const family = FAMILIES.includes(familyParam as Family)
+    const family = FAMILIES.some((candidate) => candidate === familyParam)
       ? (familyParam as Family)
       : null;
     if (Number.isFinite(seed) && seed >= 0) {
-      const cfg = randomConfig(Math.floor(seed) % 1_000_000);
+      const normalizedSeed = Math.floor(seed) % 1_000_000;
+      const cfg = family && isCreativeFamily(family)
+        ? catalogConfig(normalizedSeed, family)
+        : randomConfig(normalizedSeed);
       // eslint-disable-next-line react-hooks/set-state-in-effect -- must run post-hydration; deriving config from the URL during the initial render would desync server and client markup
-      setConfig(family ? { ...cfg, family } : cfg);
+      setConfig(family ? { ...cfg, family } : cfg.family === "accretion" ? catalogConfig(normalizedSeed, "starVortex") : cfg);
     } else {
-      const cfg = randomConfig();
-      setConfig(family ? { ...cfg, family } : cfg);
+      setConfig(catalogConfig(undefined, family ?? undefined));
     }
   }, []);
 
@@ -129,7 +133,7 @@ export default function Home() {
     <main className="fixed inset-0 overflow-hidden bg-zinc-950">
       <ShaderCanvas config={config} playing={playing} phaseRef={phaseRef} />
 
-      {/* wordmark + current design */}
+      {/* wordmark + language */}
       <header className="pointer-events-none fixed top-[max(1rem,env(safe-area-inset-top))] right-4 left-4 z-20 flex flex-col gap-2 sm:top-5 sm:right-5 sm:left-5">
         <div className="flex items-center justify-between gap-3 text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
           <div className="flex items-baseline gap-2">
@@ -153,14 +157,6 @@ export default function Home() {
             ))}
           </div>
           </div>
-        </div>
-        <div className="pointer-events-auto flex min-w-0 w-fit max-w-full flex-col gap-0.5 rounded-2xl border border-white/10 bg-zinc-950/60 px-3 py-2 backdrop-blur-xl sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:py-1.5">
-          <span className="truncate text-[13px] font-medium text-white">{config.name}</span>
-          <span className="block max-w-full truncate font-mono text-[10px] tracking-[0.1em] text-white/55 uppercase sm:tracking-[0.14em]">
-            {t(FAMILY_LABELS[config.family])}
-            {config.secondaryFamily ? ` + ${t(FAMILY_LABELS[config.secondaryFamily])}` : ""} ·{" "}
-            {t(MOTION_PROFILES[config.motionDNA].label)} · {config.bpm} bpm · {t("Seed")} {config.seed}
-          </span>
         </div>
       </header>
 

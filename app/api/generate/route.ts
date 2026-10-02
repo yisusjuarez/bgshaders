@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { AI_ENABLED } from "@/lib/features";
+import { CREATIVE_STYLES } from "@/lib/shader/catalog";
 import {
   BLEND_MODES,
   FAMILIES,
@@ -76,12 +77,12 @@ Family guide:
 - equalizer: rows of spectrum bars pulsing in waves, musical graphic feel
 - radar: luminous sweep, range rings and blinking targets, interface sci-fi feel
 - hologram: iridescent interference stripes with subtle scanlines
-- accretion: bright rotating disk surrounding a dark center
 - fractals: folded, self-similar filaments and branching boundaries
 - noise: layered animated value noise with fine granular detail
 - waves: broad stacked water-like wave bands with bright crests
 - singularity: dark event horizon with gravitationally bent light arcs
 - warpedNoise: smooth turbulent noise displaced by other noise fields
+${Object.entries(CREATIVE_STYLES).map(([family, style]) => `- ${family}: ${style.description}`).join("\n")}
 
 Pick colors that match the mood of the user's request. Prefer speed 1 and duration 8-12 for ambient backgrounds unless the request implies energy.`;
 

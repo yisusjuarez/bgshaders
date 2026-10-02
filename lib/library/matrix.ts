@@ -1,5 +1,5 @@
 import { PALETTES } from "@/lib/shader/palettes";
-import { randomConfig } from "@/lib/shader/random";
+import { catalogConfig } from "@/lib/shader/catalog";
 import { type Family, type ShaderConfig } from "@/lib/shader/schema";
 
 /** Axes the user picks in the matrix tab. The library is the cartesian product. */
@@ -31,12 +31,8 @@ export function matrixCount(axes: MatrixAxes): number {
 }
 
 /**
- * Expand the axes into concrete configs. Each item starts from randomConfig(seed)
- * — which gives varied, in-range look params and a generated name — then the
- * controlled axes (family, speed, palette colors, duration) are overridden and a
- * unique seed is assigned. random.ts is left untouched, so existing seed outputs
- * are unchanged; the full config (persisted in the sidecar) is the authoritative
- * reproduction handle, since overriding means seed alone no longer rebuilds it.
+ * Generate each selected family with its own tuning, then override the matrix
+ * axes. The full saved config is the authoritative reproduction handle.
  */
 export function buildMatrix(axes: MatrixAxes): ShaderConfig[] {
   const baseSeed = axes.baseSeed ?? DEFAULT_BASE_SEED;
@@ -52,7 +48,7 @@ export function buildMatrix(axes: MatrixAxes): ShaderConfig[] {
         for (let v = 0; v < perCombo; v++) {
           const seed = (baseSeed + index) % 1_000_000;
           index++;
-          const base = randomConfig(seed);
+          const base = catalogConfig(seed, family);
           out.push({
             ...base,
             family,

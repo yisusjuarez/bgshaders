@@ -1,4 +1,4 @@
-import { randomConfig } from "@/lib/shader/random";
+import { catalogConfig } from "@/lib/shader/catalog";
 import type { ShaderConfig } from "@/lib/shader/schema";
 
 /** Upper bound on one generated batch — keeps a stray count from melting the GPU. */
@@ -22,7 +22,7 @@ export function randomBaseSeed(): number {
 }
 
 /**
- * Draw `count` loops straight from randomConfig, one consecutive seed each, so
+ * Draw `count` loops from the expanded catalog, one consecutive seed each, so
  * the same base seed always regenerates the same batch. Unlike buildMatrix
  * nothing is overridden except the optional duration, which is what makes these
  * an unconstrained sample of the whole design space rather than a grid.
@@ -32,7 +32,7 @@ export function buildRandomBatch(opts: RandomBatchOptions): ShaderConfig[] {
   const count = Math.min(MAX_RANDOM_COUNT, Math.max(0, Math.floor(opts.count)));
   const out: ShaderConfig[] = [];
   for (let i = 0; i < count; i++) {
-    const config = randomConfig((baseSeed + i) % 1_000_000);
+    const config = catalogConfig((baseSeed + i) % 1_000_000);
     out.push(opts.duration === undefined ? config : { ...config, duration: opts.duration });
   }
   return out;
