@@ -5,12 +5,12 @@ import { FAMILIES, LEGACY_FAMILIES, hexToRgb, shaderConfigSchema } from "../sche
 
 describe("shaderConfigSchema", () => {
   it("exposes the expanded catalog without the retired ridge family", () => {
-    expect(FAMILIES).toHaveLength(71);
+    expect(FAMILIES).toHaveLength(82);
     expect(new Set(FAMILIES).size).toBe(FAMILIES.length);
     expect(FAMILIES).not.toContain("ridge");
     expect(FAMILIES).not.toContain("graphicPoster");
     expect(FAMILIES).not.toContain("accretion");
-    for (const retired of ["chromeKnot", "petalBloom", "jellyfish", "coralFan", "origamiFan"]) {
+    for (const retired of ["chromeKnot", "petalBloom", "jellyfish", "coralFan", "origamiFan", "horizonFold"]) {
       expect(FAMILIES).not.toContain(retired);
     }
     expect(FAMILIES).toEqual(

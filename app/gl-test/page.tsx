@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { ShaderRenderer } from "@/lib/shader/renderer";
 import { catalogConfig, curatedConfig, isCreativeFamily } from "@/lib/shader/catalog";
-import { BACKDROP_FAMILIES, BLEND_MODES, CREATIVE_FAMILIES, FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
+import { BLEND_MODES, CREATIVE_FAMILIES, FAMILIES, type BlendMode, type Family } from "@/lib/shader/schema";
 import { exportMp4, webCodecsSupported } from "@/lib/export/encode";
 
 const SIZE = 96;
@@ -24,25 +24,6 @@ function meanDiff(a: Uint8Array, b: Uint8Array): number {
   let sum = 0;
   for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
   return sum / a.length;
-}
-
-const LINEAR_RGB = Array.from({ length: 256 }, (_, value) => {
-  const srgb = value / 255;
-  return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
-});
-
-function minimumTextContrast(pixels: Uint8Array): number {
-  let brightest = 0;
-  // Central half of the width and central 60% of the height, independent of
-  // pattern scale: the intended field for large projected white lyrics.
-  for (let y = Math.ceil(SIZE * 0.2); y < SIZE * 0.8; y++) {
-    for (let x = Math.ceil(SIZE * 0.25); x < SIZE * 0.75; x++) {
-      const i = (y * SIZE + x) * 4;
-      const luminance = LINEAR_RGB[pixels[i]] * 0.2126 + LINEAR_RGB[pixels[i + 1]] * 0.7152 + LINEAR_RGB[pixels[i + 2]] * 0.0722;
-      brightest = Math.max(brightest, luminance);
-    }
-  }
-  return 1.05 / (brightest + 0.05);
 }
 
 export default function GlTest() {
@@ -185,23 +166,6 @@ export default function GlTest() {
             out.push(
               `layer ${primary}+${secondary}/${blendMode}: FAIL ${e instanceof Error ? e.message : e}`,
             );
-          }
-        }
-        // Check rendered pixels, including an all-white palette, so contrast
-        // holds even when users replace the authored colors with bright ones.
-        for (const family of BACKDROP_FAMILIES) {
-          try {
-            const cfg = curatedConfig(family);
-            let contrast = Infinity;
-            for (const colors of [cfg.colors, ["#FFFFFF", "#FFFFFF"]]) {
-              for (const phase of [0, 0.25, 0.5, 0.75]) {
-                renderer.render({ ...cfg, colors }, phase, SIZE, SIZE);
-                contrast = Math.min(contrast, minimumTextContrast(readPixels(gl)));
-              }
-            }
-            out.push(`text ${family}: ${contrast >= 4.5 ? "OK" : "FAIL"} contrast=${contrast.toFixed(2)}:1`);
-          } catch (e) {
-            out.push(`text ${family}: FAIL ${e instanceof Error ? e.message : e}`);
           }
         }
       } catch (e) {

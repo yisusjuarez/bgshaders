@@ -45,12 +45,19 @@ export const LEGACY_FAMILIES = [
   "warpedNoise",
 ] as const;
 
+export const ATMOSPHERE_FAMILIES = [
+  "auroraCanopy", "tidalGlass", "twilightHaze", "cloudSea", "emberVeil", "forestLight",
+  "rainWindow", "opalWash", "lightColumns", "lunarDunes", "inkWash", "deepOcean",
+] as const;
+export type AtmosphereFamily = (typeof ATMOSPHERE_FAMILIES)[number];
+
 export const BACKDROP_FAMILIES = [
   "nacreFlow", "velvetFlow", "glassVeil", "prismField", "satinDunes", "metallicWaves",
   "silkCurrent", "aquaVeil", "mistLayers", "magneticFlow",
   "foldedCanopy", "contourRelief", "floatingVeils", "prismCurtain",
   "lightPainting", "spectralRibbons", "causticPool", "eclipseHalo",
-  "starVortex", "dustDrift", "cutPaper", "opArtWeave", "neonLattice", "horizonFold",
+  "starVortex", "dustDrift", "cutPaper", "opArtWeave", "neonLattice",
+  ...ATMOSPHERE_FAMILIES,
 ] as const;
 export type BackdropFamily = (typeof BACKDROP_FAMILIES)[number];
 export const CREATIVE_FAMILIES = [
@@ -120,6 +127,22 @@ export const shaderConfigSchema = z.object({
 });
 
 export type ShaderConfig = z.infer<typeof shaderConfigSchema>;
+
+/** Hot reload can retain a family that was removed from the active catalog. */
+export function resolveActiveFamily(family: string): Family {
+  if (family === "accretion") return "starVortex";
+  return FAMILIES.find((candidate) => candidate === family) ?? "mesh";
+}
+
+/** Preserve edits while replacing obsolete live types and clearing removed layers. */
+export function normalizeActiveConfig(config: ShaderConfig): ShaderConfig {
+  const family = resolveActiveFamily(config.family);
+  const secondaryFamily = FAMILIES.some((candidate) => candidate === config.secondaryFamily)
+    ? config.secondaryFamily
+    : null;
+  if (family === config.family && secondaryFamily === config.secondaryFamily) return config;
+  return { ...config, family, secondaryFamily };
+}
 
 export function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);

@@ -29,60 +29,74 @@ cost more; those simultaneous extremes are not covered by the performance claim.
 
 ## Backgrounds for projected lyrics
 
-The 24 new backgrounds use continuous fields rather than isolated figurative
-objects. Their default duration is 16 seconds, speed is one cycle per loop,
-and grain is 0.006. A screen-relative central field suppresses highlights;
-this remains in the same place when the pattern scale or aspect ratio changes.
-The existing seven authored styles retain their appearance and timing.
+The 35 backgrounds use continuous fields and atmospheric scenes. Their default
+duration is 16 seconds, speed is one cycle per loop, and grain is 0.006. The
+central darkening mask and global highlight compression were removed at the
+user's request. Authored colors now render directly, and default vignette is
+zero for these backgrounds. The existing seven authored styles retain their
+appearance and timing. The latest 12 add auroras, ocean light, cloud banks,
+twilight, rain on glass, opal washes, ink washes and moonlit dunes.
 
-[Rendered collection with sample lyrics](creative-collection.jpg)
+[Rendered collection with sample lyrics](creative-collection.jpg) ·
+[Latest 12 backgrounds](atmosphere-collection.jpg)
 
 Each 1080p measurement below uses three warmup frames and 20 sampled phases,
 with a one-pixel `readPixels` to synchronize and an animation frame between
 samples. These are synchronized render costs, excluding shader compilation,
 on the same Apple M4; no separate GPU timer measurements were taken for these
-24 backgrounds. All default p95 costs were below 12 ms. Custom sharpness,
+35 backgrounds. All default p95 costs were below 11 ms. Custom sharpness,
 layers and extreme complexity were not included in that performance result.
 
 | Background | Synchronized p95 (ms) |
 | --- | ---: |
-| Nacre currents | 3.10 |
-| Velvet flow | 3.70 |
-| Glass veils | 3.70 |
-| Prismatic field | 3.20 |
-| Satin dunes | 2.10 |
-| Metallic waves | 4.10 |
-| Silk currents | 2.70 |
-| Aqueous veils | 6.20 |
-| Layers of mist | 5.00 |
-| Magnetic currents | 4.10 |
-| Folded canopy | 2.30 |
-| Contour relief | 3.30 |
-| Floating veils | 6.00 |
-| Prismatic curtains | 3.30 |
-| Light painting | 6.00 |
-| Spectral ribbons | 6.80 |
-| Caustic pool | 4.90 |
-| Eclipse halo | 3.00 |
-| Stellar vortex | 3.40 |
-| Drifting dust | 11.50 |
-| Paper cut landscapes | 6.00 |
-| Optical weave | 2.80 |
-| Neon lattice | 3.10 |
-| Horizon folds | 4.70 |
+| Nacre currents | 5.40 |
+| Velvet flow | 4.90 |
+| Glass veils | 6.50 |
+| Prismatic field | 4.40 |
+| Satin dunes | 4.20 |
+| Metallic waves | 4.70 |
+| Silk currents | 4.80 |
+| Aqueous veils | 6.90 |
+| Layers of mist | 6.20 |
+| Magnetic currents | 4.00 |
+| Folded canopy | 6.20 |
+| Contour relief | 3.60 |
+| Floating veils | 5.70 |
+| Prismatic curtains | 4.60 |
+| Light painting | 6.70 |
+| Spectral ribbons | 4.80 |
+| Caustic pool | 4.70 |
+| Eclipse halo | 8.60 |
+| Stellar vortex | 6.60 |
+| Drifting dust | 9.40 |
+| Paper cut landscapes | 7.30 |
+| Optical weave | 3.60 |
+| Neon lattice | 3.70 |
+| Aurora canopy | 4.90 |
+| Tidal glass | 5.00 |
+| Twilight haze | 7.30 |
+| Sea of clouds | 7.40 |
+| Amber veils | 4.50 |
+| Canopy light | 7.40 |
+| Rain on glass | 7.30 |
+| Opal washes | 6.40 |
+| Columns of light | 8.20 |
+| Moonlit dunes | 5.50 |
+| Ink washes | 5.00 |
+| Ocean light | 10.10 |
 
 ## Verified behavior
 
-- All 71 active families compile and pass loop-seam checks in `/gl-test`.
-- All 31 authored families pass across 20 seeds and speeds 1, 2 and 3; fixed-control
+- All 82 active families compile and pass loop-seam checks in `/gl-test`.
+- All 42 authored families pass across 20 seeds and speeds 1, 2 and 3; fixed-control
   seed changes alter pixels, and frames at phases 0 and 0.25 differ.
 - All four blend modes compile and close correctly for each authored family layered
   with itself; mixed new/legacy and new/new scenes also pass.
 - Real renders were reviewed at landscape, portrait and square aspect ratios,
   including two structural seeds per new background.
-- A 24-video ZIP of the new backgrounds was rendered at 320 × 180, 30 fps, two seconds per loop.
-  All 24 MP4 containers, 24 metadata files, manifest and catalog were checked.
-- The unified Edit loop sidebar exposes all 71 active types across seven categories.
+- A 12-video ZIP of the latest backgrounds was rendered at 320 × 180, 30 fps, two seconds per loop.
+  All 12 MP4 containers, 12 metadata files, manifest and catalog were checked.
+- The unified Edit loop sidebar exposes all 82 active types across seven categories.
   Switching types preserves the seed, palette, scale and duration. Inline visual
   selection keeps the editor open; restoring a style applies its visual defaults.
 - Palette editing, secondary layers, blend mode and amount, motion profiles,
@@ -92,14 +106,17 @@ layers and extreme complexity were not included in that performance result.
 - shadcn Scroll Area hides the native scrollbar and renders its custom thumb;
   the editor header remains fixed while its controls scroll. Layers and Tempo
   start collapsed, toggle independently and retain their settings when reopened.
-- Projected white text is checked against rendered pixels in the central half
-  of the width and central 60% of the height, across four phases, using both
-  authored palettes and an all-white palette. All 24 backgrounds exceed 4.5:1
-  contrast in that region; all 257 WebGL checks pass. These checks use default controls;
-  arbitrary sharpness, layers and grain are not covered by the contrast result.
+- All 299 WebGL checks pass. The former fixed white-text contrast gate was removed
+  together with automatic darkening; scene colors are rendered at their authored intensity.
 - Geometric poster, Accretion disk, Chrome knot, Petal sculpture, Jellyfish and
-  both fans are absent from all active selectors and generators. Saved legacy
+  both fans and Horizon folds are absent from all active selectors and generators. Saved legacy
   accretion exports remain decodable; a retired seed-only starting style is
   replaced with Stellar vortex in the app.
 - Frozen fixtures confirm unchanged output for legacy seeds 0, 1, 421 and 999999.
-- 94 unit tests, TypeScript, lint and the production build pass.
+- Removing a selected type during hot reload no longer crashes the editor.
+  Obsolete live types resolve to an active type while preserving edits; obsolete
+  secondary layers are cleared. The removed-Horizon-folds failure was reproduced
+  in Chrome before the fix and passes the same scenario after the fix.
+- 97 unit tests, TypeScript and lint pass. The expanded collection production
+  build also passes; the subsequent live-state recovery was checked with TypeScript
+  and the reproduced browser scenario.

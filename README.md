@@ -35,7 +35,7 @@ Open http://localhost:3000.
 ## Main workflow
 
 - **Edit** contains all loop customization in one side panel. Choose among
-  71 types grouped into materials, organic, geometry, light, space, graphic
+  82 types grouped into materials, organic, geometry, light, space, graphic
   and digital categories; expand **Choose visually** for real shader thumbnails.
   Type changes preserve your edits. **Restore style defaults** loads the selected
   type's composition and palette while retaining your name and timing.
@@ -47,13 +47,14 @@ Open http://localhost:3000.
 - The editor uses shadcn **Scroll Area** with a fixed header. **Layers** and
   **Tempo** are shadcn accordions, initially collapsed; closing them preserves
   their settings.
-- **Random** samples all 71 loop types, including hologram, crystal prisms, fractals,
+- **Random** samples all 82 loop types, including hologram, crystal prisms, fractals,
   noise, waves, singularity, warped noise, and the existing aurora, plasma,
   smoke, nebula, and lava lamp effects.
-- The authored collection now includes 31 compositions, with 24 new backgrounds
+- The authored collection now includes 42 compositions, with 35 backgrounds
   designed for projected lyrics: velvet, nacre, glass, satin, mist, paper and light.
-  Their central field keeps highlights subdued, with low grain and 16-second
-  default loops. See the
+  The latest 12 explore auroras, ocean light, cloud banks, twilight, rain on glass,
+  opal, ink and moonlit dunes. Colors render at their authored intensity without
+  a central darkening mask; grain is low and default loops are 16 seconds. See the
   [new collection](docs/creative-collection.jpg) and [validation notes](docs/creative-validation.md).
   Geometric poster and Accretion disk are retired from the active catalog.
 - **Customize pack** also includes musical timing and custom palettes.

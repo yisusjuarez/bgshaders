@@ -92,7 +92,7 @@ export const CREATIVE_STYLES: Record<CreativeFamily, CreativeStyle> = {
     scale: 1.15, complexity: 0.65, warp: 0.6, motionDNA: "cinematic",
   },
   mistLayers: {
-    description: "Layered atmospheric mist drifting slowly behind a quiet text field.",
+    description: "Layered atmospheric mist drifting slowly through broad diffused color.",
     seed: 32063, palettes: [["#130E1C", "#552948", "#AC596F", "#F3A478", "#FFF0B9"], ["#061B20", "#185764", "#459C99", "#A4D7AC", "#F3FFDD"]],
     scale: 1.05, complexity: 0.6, warp: 0.5, motionDNA: "fluid",
   },
@@ -112,7 +112,7 @@ export const CREATIVE_STYLES: Record<CreativeFamily, CreativeStyle> = {
     scale: 1.05, complexity: 0.7, warp: 0.5, motionDNA: "calm",
   },
   floatingVeils: {
-    description: "Broad translucent folds drifting across a quiet central field.",
+    description: "Broad translucent folds drifting across an open color field.",
     seed: 40487, palettes: [["#071A20", "#294652", "#A96745", "#CE9962", "#F9E9CF"], ["#15192A", "#405877", "#818DBE", "#DEA89E", "#FFF0D4"]],
     scale: 1.1, complexity: 0.55, warp: 0.65, motionDNA: "calm",
   },
@@ -166,10 +166,65 @@ export const CREATIVE_STYLES: Record<CreativeFamily, CreativeStyle> = {
     seed: 61547, palettes: [["#020916", "#124C65", "#2087AC", "#6CE5D5", "#E0FFEA"], ["#11081F", "#47246B", "#9D49C0", "#F0A1CD", "#FFF0DD"]],
     scale: 1.1, complexity: 0.45, warp: 0.5, motionDNA: "tech",
   },
-  horizonFold: {
-    description: "Wide horizon folds with gentle parallax and restrained ridges.",
-    seed: 63659, palettes: [["#070F1D", "#2D446B", "#688BAE", "#B3D5DC", "#F4F8E9"], ["#170E1B", "#543059", "#A1718C", "#DAB6A6", "#FFF1D3"]],
-    scale: 1.15, complexity: 0.6, warp: 0.6, motionDNA: "tech",
+  auroraCanopy: {
+    description: "Broad aurora waves unfurling overhead with flowing spectral curtains.",
+    seed: 65761, palettes: [["#0B1836", "#165E75", "#41C5AD", "#A3A0F7", "#EFFFF7"], ["#23163E", "#7753B0", "#DE7CD0", "#F7C998", "#FFF7DE"]],
+    scale: 1.15, complexity: 0.55, warp: 0.6, motionDNA: "cinematic",
+  },
+  tidalGlass: {
+    description: "A continuous glassy water surface with broad swells and silver reflections.",
+    seed: 67867, palettes: [["#0C354D", "#237D96", "#79CBCB", "#C1E5DD", "#F5FFF0"], ["#352440", "#826198", "#C7A2C5", "#F0D3BD", "#FFF7E4"]],
+    scale: 1.25, complexity: 0.4, warp: 0.55, motionDNA: "fluid",
+  },
+  twilightHaze: {
+    description: "An open twilight horizon washed with warm light and drifting atmospheric bands.",
+    seed: 69973, palettes: [["#22345C", "#6866A0", "#CC869D", "#F1B98B", "#FFF0CC"], ["#163D52", "#427F8A", "#99BCB0", "#DED5B3", "#FFF3DB"]],
+    scale: 1.1, complexity: 0.4, warp: 0.5, motionDNA: "calm",
+  },
+  cloudSea: {
+    description: "Soft rolling cloud banks below an expansive sky with luminous cloud edges.",
+    seed: 72077, palettes: [["#1A3558", "#507B9C", "#93B5CF", "#DEE5EB", "#FFF6E8"], ["#46304F", "#91697F", "#CEA09F", "#F3D5BC", "#FFF4DA"]],
+    scale: 1.2, complexity: 0.5, warp: 0.6, motionDNA: "cinematic",
+  },
+  emberVeil: {
+    description: "Warm amber light drifting through broad smoky veils without flashing sparks.",
+    seed: 74189, palettes: [["#301A24", "#883F42", "#D87851", "#F9BC74", "#FFF0CB"], ["#27253B", "#655F97", "#A39BC7", "#DBC6DB", "#FFF0E0"]],
+    scale: 1.15, complexity: 0.45, warp: 0.65, motionDNA: "fluid",
+  },
+  forestLight: {
+    description: "Dappled canopy light and broad diagonal sunbeams shifting softly through green shade.",
+    seed: 76297, palettes: [["#173D36", "#39765A", "#87AE6B", "#D3D991", "#FFF6CA"], ["#183E4D", "#388591", "#8ECAC0", "#D8E9CD", "#FFFFE2"]],
+    scale: 1.2, complexity: 0.4, warp: 0.55, motionDNA: "calm",
+  },
+  rainWindow: {
+    description: "Rain on glass refracting a soft field of color with delicate moving droplet reflections.",
+    seed: 78401, palettes: [["#16354D", "#467F9A", "#91BACC", "#DADCE1", "#FFF3DE"], ["#352342", "#805B89", "#BD90B6", "#E8C1CE", "#FFF0DA"]],
+    scale: 1.1, complexity: 0.4, warp: 0.5, motionDNA: "calm",
+  },
+  opalWash: {
+    description: "Broad opalescent washes with flowing pearl color and diffuse spectral reflections.",
+    seed: 80509, palettes: [["#3D5276", "#8F94C6", "#CBAED3", "#ACE1D7", "#FFF2E2"], ["#38595A", "#86B6A7", "#D6CF9F", "#E6B5BA", "#FFF4DE"]],
+    scale: 1.25, complexity: 0.5, warp: 0.7, motionDNA: "fluid",
+  },
+  lightColumns: {
+    description: "Soft columns of colored stage light opening into a spacious luminous field.",
+    seed: 82613, palettes: [["#172540", "#4C6DC0", "#AB94E8", "#EFB8D5", "#FFF1DE"], ["#193E3E", "#3E9384", "#A0D7A3", "#ECE3AE", "#FFFFDD"]],
+    scale: 1.2, complexity: 0.45, warp: 0.5, motionDNA: "cinematic",
+  },
+  lunarDunes: {
+    description: "Layered moonlit dunes with gently shifting ridges and an open blue horizon.",
+    seed: 84719, palettes: [["#243C60", "#5D7A9B", "#9AAFC6", "#D8D9DC", "#FFF0DA"], ["#3D3156", "#80658D", "#BA98B1", "#E3C4C5", "#FFF0D4"]],
+    scale: 1.05, complexity: 0.5, warp: 0.55, motionDNA: "calm",
+  },
+  inkWash: {
+    description: "Fluid ink washes with feathered pigment boundaries and layered watercolor texture.",
+    seed: 86827, palettes: [["#163F58", "#3E7F98", "#88B9C0", "#CDD7CD", "#F6E8CC"], ["#4E294C", "#996184", "#CE99AA", "#E9CDBA", "#FFF0D5"]],
+    scale: 1.2, complexity: 0.5, warp: 0.7, motionDNA: "fluid",
+  },
+  deepOcean: {
+    description: "Broad shafts of refracted surface light drifting through layered ocean blues.",
+    seed: 88937, palettes: [["#07374F", "#136987", "#45A9B6", "#9ED9CF", "#EFFFF0"], ["#212D57", "#4F5D99", "#919DD0", "#CFD3E6", "#FFF4DE"]],
+    scale: 1.15, complexity: 0.5, warp: 0.6, motionDNA: "cinematic",
   },
 };
 
@@ -184,7 +239,7 @@ export function curatedConfig(family: CreativeFamily): ShaderConfig {
     name: FAMILY_LABELS[family], family, seed: style.seed,
     colors: [...style.palettes[0]], speed: 1, scale: style.scale,
     complexity: style.complexity * (backdrop ? 0.8 : 1), warp: style.warp,
-    grain: backdrop ? 0.006 : 0.012, sharpness: 0, vignette: style.vignette ?? 0.18,
+    grain: backdrop ? 0.006 : 0.012, sharpness: 0, vignette: style.vignette ?? (backdrop ? 0 : 0.18),
     duration: backdrop ? 16 : 8, secondaryFamily: null, blendMode: "mix", blendAmount: 0.5,
     motionDNA: style.motionDNA, bpm: 120, beats: backdrop ? 32 : 16,
   };

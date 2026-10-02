@@ -25,7 +25,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   calm: {
     label: "Calm",
     description: "Slow, spacious and quiet",
-    families: ["mesh", "breath", "sweep", "aurora", "prism", "waves", "iridescentGlass", "nacreFlow", "contourRelief", "floatingVeils", "cutPaper"],
+    families: ["mesh", "breath", "sweep", "aurora", "prism", "waves", "iridescentGlass", "nacreFlow", "contourRelief", "floatingVeils", "cutPaper", "twilightHaze", "forestLight", "rainWindow", "lunarDunes"],
     speed: 1,
     scale: [0.65, 1.15],
     complexity: [0.25, 0.55],
@@ -38,7 +38,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   fluid: {
     label: "Fluid",
     description: "Organic, soft and continuously flowing",
-    families: ["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise", "liquidMetal", "ribbonSculpture", "satinDunes", "metallicWaves", "silkCurrent", "mistLayers", "spectralRibbons", "causticPool"],
+    families: ["silk", "smoke", "lava", "marble", "ink", "caustics", "warpedNoise", "liquidMetal", "ribbonSculpture", "satinDunes", "metallicWaves", "silkCurrent", "mistLayers", "spectralRibbons", "causticPool", "tidalGlass", "emberVeil", "opalWash", "inkWash"],
     speed: 1,
     scale: [0.7, 1.4],
     complexity: [0.45, 0.8],
@@ -77,7 +77,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   tech: {
     label: "Tech",
     description: "Precise, digital and interface-like",
-    families: ["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram", "architecture", "moire", "neonLattice", "horizonFold"],
+    families: ["grid", "hex", "maze", "radar", "glitch", "cells", "noise", "hologram", "architecture", "moire", "neonLattice"],
     speed: 2,
     scale: [0.9, 1.65],
     complexity: [0.5, 0.88],
@@ -90,7 +90,7 @@ export const MOTION_PROFILES: Record<MotionDNA, MotionProfile> = {
   cinematic: {
     label: "Cinematic",
     description: "Layered, atmospheric and dramatic",
-    families: ["nebula", "aurora", "rays", "smoke", "orbitals", "prism", "iridescentGlass", "constellation", "glassVeil", "prismField", "aquaVeil", "eclipseHalo", "starVortex"],
+    families: ["nebula", "aurora", "rays", "smoke", "orbitals", "prism", "iridescentGlass", "constellation", "glassVeil", "prismField", "aquaVeil", "eclipseHalo", "starVortex", "auroraCanopy", "cloudSea", "lightColumns", "deepOcean"],
     speed: 1,
     scale: [0.62, 1.28],
     complexity: [0.58, 0.92],

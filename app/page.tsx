@@ -18,7 +18,7 @@ import {
   setLibrary,
 } from "@/lib/library/store";
 import { randomConfig } from "@/lib/shader/random";
-import { FAMILIES, type Family, type ShaderConfig } from "@/lib/shader/schema";
+import { FAMILIES, normalizeActiveConfig, type Family, type ShaderConfig } from "@/lib/shader/schema";
 
 // Hydration-safe placeholder. The URL/bootstrap effect replaces it with a
 // fresh random design before normal interaction begins.
@@ -26,9 +26,10 @@ const INITIAL_SEED = 421;
 
 export default function Home() {
   const { language, setLanguage, t } = useLanguage();
-  const [config, setConfig] = useState<ShaderConfig>(() =>
+  const [storedConfig, setConfig] = useState<ShaderConfig>(() =>
     randomConfig(INITIAL_SEED),
   );
+  const config = normalizeActiveConfig(storedConfig);
   const [playing, setPlaying] = useState(true);
   const [aiOpen, setAiOpen] = useState(false);
   const [creativeOpen, setCreativeOpen] = useState(false);
@@ -40,7 +41,7 @@ export default function Home() {
   const phaseRef = useRef(0);
 
   const patch = useCallback(
-    (p: Partial<ShaderConfig>) => setConfig((c) => ({ ...c, ...p })),
+    (p: Partial<ShaderConfig>) => setConfig((c) => normalizeActiveConfig({ ...c, ...p })),
     [],
   );
   const randomize = useCallback(() => {

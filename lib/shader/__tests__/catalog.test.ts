@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { catalogConfig, CREATIVE_STYLES, curatedConfig } from "../catalog";
 import { randomConfig, TUNING } from "../random";
-import { CREATIVE_FAMILIES, FAMILIES, shaderConfigSchema } from "../schema";
+import { CREATIVE_FAMILIES, FAMILIES, normalizeActiveConfig, shaderConfigSchema, type Family } from "../schema";
 import { layeredFragmentSource } from "../glsl";
 import legacySeeds from "./legacy-seeds.json";
 import { buildMatrix } from "@/lib/library/matrix";
@@ -43,6 +43,29 @@ describe("expanded creative catalog", () => {
     expect(categorized).toHaveLength(FAMILIES.length);
     expect(new Set(categorized)).toEqual(new Set(FAMILIES));
     for (const family of FAMILIES) expect(categoryForFamily(family).families).toContain(family);
+  });
+
+  it("recovers a removed live type while preserving its edits", () => {
+    const original = curatedConfig("tidalGlass");
+    for (const removed of ["horizonFold", "graphicPoster", "chromeKnot", "petalBloom", "jellyfish", "coralFan", "origamiFan"]) {
+      const stale = { ...original, family: removed as Family };
+      const restored = normalizeActiveConfig(stale);
+      expect(restored).toEqual({ ...original, family: "mesh" });
+      expect(restored.colors).toBe(original.colors);
+      expect(shaderConfigSchema.safeParse(restored).success).toBe(true);
+      expect(categoryForFamily(stale.family).families).toContain(restored.family);
+    }
+  });
+
+  it("clears a removed live layer without altering the primary composition", () => {
+    const original = curatedConfig("opalWash");
+    expect(normalizeActiveConfig({ ...original, secondaryFamily: "horizonFold" as Family })).toEqual(original);
+    expect(normalizeActiveConfig({ ...original, family: "accretion" }).family).toBe("starVortex");
+  });
+
+  it("retains active config identity and valid secondary layers", () => {
+    const config = { ...curatedConfig("rainWindow"), secondaryFamily: "smoke" as const };
+    expect(normalizeActiveConfig(config)).toBe(config);
   });
 
   it("never generates retired families, including explicitly requested draws", () => {

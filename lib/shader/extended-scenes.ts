@@ -1,4 +1,5 @@
 import type { BackdropFamily } from "./schema";
+import { ATMOSPHERE_SCENES } from "./atmosphere-scenes";
 
 // Scene-local helpers are namespaced by the layered shader builder. Surfaces
 // are analytic; animation uses integer harmonics and needs no simulation state.
@@ -30,6 +31,7 @@ vec3 studio(vec3 n, float tint, float gloss) {
 `;
 
 const COMPOSITIONS = {
+  ...ATMOSPHERE_SCENES,
   nacreFlow: `${STUDIO}
 vec3 scene(vec2 p, float T) {
   p = turn(hash(201.0) * TAU) * p;
@@ -429,38 +431,7 @@ vec3 scene(vec2 p, float T) {
   return col * (0.4 + 0.6 * exp(-dot(p, p) * 1.6));
 }
 `,
-  horizonFold: `${STUDIO}
-vec3 scene(vec2 p, float T) {
-  p = turn((hash(431.0) - 0.5) * 0.35) * p;
-  float count = 4.0 + floor(u_complexity * 4.0);
-  vec3 col = pal(0.0) * 0.7;
-  for (int i = 0; i < 8; i++) {
-    float fi = float(i);
-    if (fi >= count) break;
-    float y = -0.4 + fi * 0.1 + 0.025 * sin(T + fi * 0.4);
-    float curve = y + u_warp * 0.12 * sin(p.x * 2.0 + sin(T + hash(432.0) * TAU));
-    float d = p.y - curve;
-    float ridge = exp(-abs(d) * 80.0);
-    vec3 tint = pal(0.2 + fi / count * 0.5);
-    col = mix(col, tint * (0.42 + ridge * 0.5), cover(d));
-  }
-  return col;
-}
-`,
 } satisfies Record<BackdropFamily, string>;
 
-// Reserve a quiet central field for projected lyrics. Keep highlights toward
-// the edges and bound their intensity without altering the palette's hue.
-export const EXTENDED_SCENES = Object.fromEntries(
-  Object.entries(COMPOSITIONS).map(([family, source]) => [family,
-    source.replace("vec3 scene(", "vec3 composition(") + `
-vec3 scene(vec2 p, float T) {
-  vec3 col = max(composition(p, T), vec3(0.0));
-  float highlight = max(max(col.r, col.g), col.b);
-  col /= 1.0 + highlight;
-  vec2 textField = (gl_FragCoord.xy / u_res - 0.5) * vec2(1.4, 1.8);
-  float quiet = 1.0 - smoothstep(0.52, 0.92, length(textField));
-  return col * mix(0.68, 0.32, quiet);
-}
-`]),
-) as { [Family in keyof typeof COMPOSITIONS]: string };
+// Preserve the authored color and light. No global dimming or central mask.
+export const EXTENDED_SCENES = COMPOSITIONS;

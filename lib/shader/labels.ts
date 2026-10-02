@@ -73,7 +73,18 @@ export const FAMILY_LABELS: Record<Family, string> = {
   cutPaper: "Paper cut landscapes",
   opArtWeave: "Optical weave",
   neonLattice: "Neon lattice",
-  horizonFold: "Horizon folds",
+  auroraCanopy: "Aurora canopy",
+  tidalGlass: "Tidal glass",
+  twilightHaze: "Twilight haze",
+  cloudSea: "Sea of clouds",
+  emberVeil: "Amber veils",
+  forestLight: "Canopy light",
+  rainWindow: "Rain on glass",
+  opalWash: "Opal washes",
+  lightColumns: "Columns of light",
+  lunarDunes: "Moonlit dunes",
+  inkWash: "Ink washes",
+  deepOcean: "Ocean light",
 };
 
 export const familyItems = FAMILIES.map((f) => ({
